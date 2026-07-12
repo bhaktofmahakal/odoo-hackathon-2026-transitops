@@ -80,8 +80,9 @@
 │   │
 │   └── pages/
 │       ├── auth/
-│       │   ├── login.tsx                # Sign in + role selector + remember me
-│       │   └── signup.tsx               # Sign up with role chip selector
+│       │   ├── login.tsx                # Sign in + role selector + remember me + forgot password
+│       │   ├── signup.tsx               # Sign up with role chip selector
+│       │   └── reset-password.tsx       # Password reset form (token from email link)
 │       │
 │       ├── dashboard/
 │       │   ├── index.tsx                # Dashboard layout + data fetching
@@ -158,7 +159,8 @@
 **Auth flow:**
 - Sign up: role chip selector → `supabase.auth.signUp()` with role in metadata → upserts `profiles` table
 - Sign in: role chip selector (optional) → validates role matches expected
-- Auth context (`src/context/auth-context.tsx`) provides `profile`, `role`, `signIn`, `signUp`, `signOut`
+- Forgot password: email input → `supabase.auth.resetPasswordForEmail()` → sends email with reset link → `/reset-password` page → `supabase.auth.updateUser()` sets new password
+- Auth context (`src/context/auth-context.tsx`) provides `profile`, `role`, `signIn`, `signUp`, `signOut`, `resetPassword`, `updatePassword`
 
 **Permission helpers** (`src/lib/permissions.ts`):
 - `canWrite(role, resource)` — returns boolean for write access
