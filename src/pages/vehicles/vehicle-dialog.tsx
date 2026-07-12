@@ -308,18 +308,23 @@ export function VehicleDialog({
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Capacity (kg) *
+                Capacity *
               </label>
-              <input
-                type="number"
-                placeholder="500"
-                disabled={!isManager}
-                value={maxLoadCapacity}
-                onChange={(e) => setMaxLoadCapacity(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.maxLoadCapacity ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  placeholder="500"
+                  disabled={!isManager}
+                  value={maxLoadCapacity}
+                  onChange={(e) => setMaxLoadCapacity(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-9 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.maxLoadCapacity ? "border-destructive" : "border-input"
+                  }`}
+                />
+                <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground uppercase pointer-events-none select-none">
+                  kg
+                </span>
+              </div>
               {errors.maxLoadCapacity && (
                 <p className="text-[10px] text-destructive leading-tight">
                   {errors.maxLoadCapacity}
@@ -329,18 +334,23 @@ export function VehicleDialog({
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Odometer (km) *
+                Odometer *
               </label>
-              <input
-                type="number"
-                placeholder="74000"
-                disabled={!isManager}
-                value={odometer}
-                onChange={(e) => setOdometer(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.odometer ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  placeholder="74000"
+                  disabled={!isManager}
+                  value={odometer}
+                  onChange={(e) => setOdometer(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-9 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.odometer ? "border-destructive" : "border-input"
+                  }`}
+                />
+                <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground uppercase pointer-events-none select-none">
+                  km
+                </span>
+              </div>
               {errors.odometer && (
                 <p className="text-[10px] text-destructive leading-tight">
                   {errors.odometer}
@@ -350,18 +360,23 @@ export function VehicleDialog({
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Acq. Cost ($) *
+                Acq. Cost *
               </label>
-              <input
-                type="number"
-                placeholder="620000"
-                disabled={!isManager}
-                value={acquisitionCost}
-                onChange={(e) => setAcquisitionCost(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.acquisitionCost ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                  $
+                </span>
+                <input
+                  type="number"
+                  placeholder="620000"
+                  disabled={!isManager}
+                  value={acquisitionCost}
+                  onChange={(e) => setAcquisitionCost(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-6 pr-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.acquisitionCost ? "border-destructive" : "border-input"
+                  }`}
+                />
+              </div>
               {errors.acquisitionCost && (
                 <p className="text-[10px] text-destructive leading-tight">
                   {errors.acquisitionCost}
