@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Papa from 'papaparse';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import {
   BarChart,
   Bar,
@@ -197,7 +199,92 @@ export default function ReportsPage() {
   };
 
   const handleExportPDF = () => {
-    toast.info('Exporting report data to PDF...');
+    if (computedReports.length === 0) {
+      toast.warning('No data available to export');
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Header Banner
+    doc.setFillColor(28, 25, 23); // sleek dark mode gray
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('TransitOps Smart Transport Operations', 14, 20);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(156, 163, 175);
+    doc.text(`Fleet Performance & ROI Analytics Report`, 14, 28);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 34);
+
+    // Meta parameters
+    doc.setTextColor(50, 50, 50);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('REPORT FILTERS & CONTEXT:', 14, 48);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Date Range: ${startDate || 'All-Time'} to ${endDate || 'All-Time'}`, 14, 54);
+    doc.text(`Vehicle Type: ${selectedType === 'all' ? 'All Types' : selectedType}`, 14, 60);
+    doc.text(`Region Scope: ${selectedRegion === 'all' ? 'All Regions' : selectedRegion === 'empty' ? 'Unassigned' : selectedRegion}`, 14, 66);
+
+    const activeFleet = vehicles.filter((v) => v.status !== 'Retired').length;
+    const busyFleet = vehicles.filter((v) => v.status === 'On Trip').length;
+    const utilizationRate = activeFleet > 0 ? ((busyFleet / activeFleet) * 100).toFixed(1) : '0.0';
+    const totalOpsCost = computedReports.reduce((sum, r) => sum + r.total_operational_cost, 0);
+
+    const validRois = computedReports.filter((r) => r.acquisition_cost > 0);
+    const avgRoi = validRois.length > 0 ? validRois.reduce((sum, r) => sum + r.roi, 0) / validRois.length : 0;
+    const avgRoiPct = `${(avgRoi * 100).toFixed(4)}%`;
+
+    doc.text(`Active Fleet: ${activeFleet} vehicles  |  Utilization: ${utilizationRate}%`, 110, 54);
+    doc.text(`Total Operational Cost: $${totalOpsCost.toLocaleString()}  |  Avg ROI Index: ${avgRoiPct}`, 110, 60);
+
+    // Table mapping
+    (doc as any).autoTable({
+      head: [[
+        'Vehicle', 
+        'Type', 
+        'Distance', 
+        'Fuel Cost', 
+        'Maint. Cost', 
+        'Revenue', 
+        'Ops Cost', 
+        'ROI (%)'
+      ]],
+      body: computedReports.map((row) => [
+        `${row.name_model} (${row.registration_number})`,
+        row.type,
+        `${row.total_distance.toLocaleString()} km`,
+        `$${row.total_fuel_cost.toLocaleString()}`,
+        `$${row.total_maintenance_cost.toLocaleString()}`,
+        `$${row.total_revenue.toLocaleString()}`,
+        `$${row.total_operational_cost.toLocaleString()}`,
+        `${(row.roi * 100).toFixed(4)}%`
+      ]),
+      startY: 74,
+      theme: 'striped',
+      headStyles: { fillColor: [245, 158, 11] }, // Warm Amber brand color!
+      styles: { fontSize: 8.5 },
+      columnStyles: {
+        0: { cellWidth: 45 },
+        1: { cellWidth: 20 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 22 },
+        7: { cellWidth: 22, halign: 'right' }
+      }
+    });
+
+    doc.save(`fleet_operations_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success('PDF Report exported successfully');
   };
   return (
     <div className="p-6 space-y-6">
