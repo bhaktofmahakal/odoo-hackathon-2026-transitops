@@ -15,6 +15,7 @@ import {
   Wrench,
   Fuel,
   BarChart3,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -26,6 +27,7 @@ const NAV_ICONS: Record<NavItem, LucideIcon> = {
   maintenance: Wrench,
   "fuel-expenses": Fuel,
   reports: BarChart3,
+  settings: Settings,
 };
 
 interface SidebarProps {
