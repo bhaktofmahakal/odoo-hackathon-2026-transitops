@@ -9,7 +9,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("driver");
+  const [role, setRole] = useState<UserRole | "">("driver");
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signUp(email, password, fullName, role);
+    const { error } = await signUp(email, password, fullName, (role || "driver") as UserRole);
 
     if (error) {
       toast.error("Sign up failed", { description: error });
@@ -155,7 +155,7 @@ export default function SignupPage() {
 
             <RoleSelector
               value={role}
-              onChange={(r) => setRole(r || "driver")}
+              onChange={setRole}
               required
             />
 
