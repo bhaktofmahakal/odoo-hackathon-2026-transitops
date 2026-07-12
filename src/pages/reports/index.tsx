@@ -14,6 +14,17 @@ import {
   FileDown,
   Gauge,
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 
 export default function ReportsPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -140,6 +151,17 @@ export default function ReportsPage() {
   const regionsList = useMemo(() => {
     return Array.from(new Set(vehicles.map((v) => v.region).filter(Boolean))) as string[];
   }, [vehicles]);
+
+  const fuelEfficiencyData = useMemo(() => {
+    return computedReports
+      .filter((r) => r.total_fuel_liters > 0)
+      .map((r) => ({
+        name: r.registration_number,
+        fullName: `${r.name_model} (${r.registration_number})`,
+        efficiency: r.fuel_efficiency,
+      }))
+      .sort((a, b) => b.efficiency - a.efficiency);
+  }, [computedReports]);
 
   return (
     <div className="p-6 space-y-6">
