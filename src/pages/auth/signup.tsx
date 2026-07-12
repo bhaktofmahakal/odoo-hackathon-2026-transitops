@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import type { UserRole } from "@/lib/types";
 import { toast } from "sonner";
 import { RoleSelector } from "@/components/ui/role-selector";
+import { MailCheck } from "lucide-react";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
@@ -11,8 +12,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole | "">("driver");
   const [loading, setLoading] = useState(false);
+  const [signedUp, setSignedUp] = useState(false);
   const { signUp } = useAuth();
-  const navigate = useNavigate();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -26,10 +27,8 @@ export default function SignupPage() {
       return;
     }
 
-    toast.success("Account created!", {
-      description: "Your profile and selected role are ready. You can now sign in.",
-    });
-    navigate("/login");
+    setSignedUp(true);
+    setLoading(false);
   }
 
   return (
@@ -98,74 +97,97 @@ export default function SignupPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="full-name"
-                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
-              >
-                Full Name
-              </label>
-              <input
-                id="full-name"
-                type="text"
-                placeholder="Alex Rivera"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+            {signedUp ? (
+              <div className="flex flex-col items-center text-center space-y-4 py-6">
+                <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/10">
+                  <MailCheck className="size-7 text-amber-500" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Check your email</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We sent a verification link to <span className="font-medium text-foreground">{email}</span>.
+                    Please verify your email before signing in.
+                  </p>
+                </div>
+                <Link
+                  to="/login"
+                  className="w-full h-11 flex items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  Go to Sign In
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="full-name"
+                    className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+                  >
+                    Full Name
+                  </label>
+                  <input
+                    id="full-name"
+                    type="text"
+                    placeholder="Alex Rivera"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="alex@transitops.io"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="alex@transitops.io"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+                  >
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
 
-            <RoleSelector
-              value={role}
-              onChange={setRole}
-              required
-            />
+                <RoleSelector
+                  value={role}
+                  onChange={setRole}
+                  required
+                />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Creating account…" : "Create Account"}
-            </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-11 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Creating account…" : "Create Account"}
+                </button>
+              </>
+            )}
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
