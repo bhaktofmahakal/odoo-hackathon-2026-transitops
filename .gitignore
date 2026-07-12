@@ -22,3 +22,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Agent files and lockfiles
+.agents/
+.claude/
+.serena/
+skills-lock.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Hackathon organizers source files
+mockup/
+TransitOps Smart Transport Operations Platform.pdf
+PRD.md
+pdf-images/
+
