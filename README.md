@@ -132,7 +132,7 @@ TransitOps is a centralized fleet operations, compliance, and analytics platform
 ### Live App
 **URL:** https://odoo-hackathon-2026-transitops.vercel.app
 
-### Test Accounts (pre-seeded, ready to login)
+### Test Accounts (pre-seeded, pre-verified ready to login)
 
 | Role | Email | Password |
 |------|-------|----------|
