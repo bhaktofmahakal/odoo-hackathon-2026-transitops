@@ -150,6 +150,22 @@ export default function LoginPage() {
               onChange={(r) => setRole(r)}
             />
 
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input bg-transparent"
+                />
+                Remember me
+              </label>
+              <a
+                href="#"
+                className="text-sm text-amber-500 hover:text-amber-400 font-medium"
+              >
+                Forgot password?
+              </a>
+            </div>
+
             <button
               type="submit"
               disabled={loading}

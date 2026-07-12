@@ -176,6 +176,58 @@ export default function MaintenancePage() {
         </div>
       )}
 
+      {/* Flow diagram */}
+      <div className="rounded-xl border bg-card p-4">
+        <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase mb-4">
+          Vehicle Status Flow
+        </h3>
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          {/* Available node */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+              Available
+            </div>
+            <span className="text-[10px] text-muted-foreground text-center max-w-[100px]">
+              Create quality maintenance record
+            </span>
+          </div>
+
+          {/* Arrow right */}
+          <div className="flex flex-col items-center gap-1">
+            <svg className="w-12 h-4 text-muted-foreground" viewBox="0 0 48 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 8h40M40 4l4 4-4 4" />
+            </svg>
+          </div>
+
+          {/* In Shop node */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-400 font-semibold text-sm">
+              In Shop
+            </div>
+            <span className="text-[10px] text-muted-foreground text-center max-w-[100px]">
+              Maintenance completed
+            </span>
+          </div>
+
+          {/* Arrow back */}
+          <div className="flex flex-col items-center gap-1">
+            <svg className="w-12 h-4 text-muted-foreground rotate-180" viewBox="0 0 48 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 8h40M40 4l4 4-4 4" />
+            </svg>
+          </div>
+
+          {/* Available node again */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+              Available
+            </div>
+            <span className="text-[10px] text-muted-foreground text-center max-w-[100px]">
+              Vehicle returned to fleet
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* List content */}
       {loading ? (
         <TableSkeleton rows={5} columns={6} />

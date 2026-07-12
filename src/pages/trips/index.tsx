@@ -293,6 +293,45 @@ export default function TripsPage() {
 
         {isAuthorized ? (
           <div className="space-y-4">
+            {/* Trip Lifecycle Progress */}
+            <div className="rounded-lg border bg-muted/40 p-3">
+              <h3 className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-3">
+                Trip Lifecycle
+              </h3>
+              <div className="flex items-center gap-1">
+                {["Draft", "Dispatched", "Completed"].map((stage, i) => (
+                  <div key={stage} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width:
+                              stage === "Draft"
+                                ? "100%"
+                                : stage === "Dispatched"
+                                  ? "30%"
+                                  : "0%",
+                            backgroundColor:
+                              stage === "Draft"
+                                ? "#34d399"
+                                : stage === "Dispatched"
+                                  ? "#60a5fa"
+                                  : "#a1a1aa",
+                          }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-medium text-muted-foreground mt-1.5">
+                        {stage}
+                      </span>
+                    </div>
+                    {i < 2 && (
+                      <ArrowRight className="size-3 text-muted-foreground mx-1 flex-shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Source Location *

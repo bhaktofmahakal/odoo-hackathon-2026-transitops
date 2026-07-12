@@ -162,12 +162,12 @@ export default function VehiclesPage() {
       {/* Filters bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card border rounded-xl p-4">
         <div className="flex flex-1 flex-col sm:flex-row gap-3">
-          {/* Search */}
+          {/* Search reg. no */}
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search registration or model..."
+              placeholder="Search reg. no..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
