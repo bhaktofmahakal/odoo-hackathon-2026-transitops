@@ -131,7 +131,7 @@ begin
     NEW.dispatched_at = now();
 
     insert into notifications (recipient_id, type, message)
-    select created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
+    select NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
     where NEW.created_by is not null;
 
   elsif NEW.status = 'Completed' and OLD.status = 'Dispatched' then
@@ -150,7 +150,7 @@ begin
 end;
 $$ language plpgsql;
 
-create trigger trg_trip_status_cascade
+create trigger trg_1_trip_status_cascade
 before update on trips
 for each row
 when (NEW.status is distinct from OLD.status)
@@ -187,7 +187,7 @@ begin
 end;
 $$ language plpgsql;
 
-create trigger trg_trip_validate
+create trigger trg_0_trip_validate
 before insert or update on trips
 for each row
 execute function fn_trip_validate();
