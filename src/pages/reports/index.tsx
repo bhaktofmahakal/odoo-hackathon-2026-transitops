@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Vehicle, Trip, MaintenanceLog, FuelLog } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -272,11 +273,11 @@ export default function ReportsPage() {
       "Name/Model": row.name_model,
       "Vehicle Type": row.type,
       "Total Distance (km)": row.total_distance,
-      "Total Fuel Cost ($)": row.total_fuel_cost,
+      "Total Fuel Cost (₹)": row.total_fuel_cost,
       "Total Fuel Liters (L)": row.total_fuel_liters,
-      "Total Maintenance Cost ($)": row.total_maintenance_cost,
-      "Total Operational Cost ($)": row.total_operational_cost,
-      "Total Revenue ($)": row.total_revenue,
+      "Total Maintenance Cost (₹)": row.total_maintenance_cost,
+      "Total Operational Cost (₹)": row.total_operational_cost,
+      "Total Revenue (₹)": row.total_revenue,
       "Fuel Efficiency (km/L)": row.fuel_efficiency,
       "ROI (%)": (row.roi * 100).toFixed(4),
     }));
@@ -365,7 +366,7 @@ export default function ReportsPage() {
       54,
     );
     doc.text(
-      `Total Operational Cost: $${totalOpsCost.toLocaleString()}  |  Avg ROI Index: ${avgRoiPct}`,
+      `Total Operational Cost: ${formatCurrency(totalOpsCost)}  |  Avg ROI Index: ${avgRoiPct}`,
       110,
       60,
     );
@@ -388,10 +389,10 @@ export default function ReportsPage() {
         `${row.name_model} (${row.registration_number})`,
         row.type,
         `${row.total_distance.toLocaleString()} km`,
-        `$${row.total_fuel_cost.toLocaleString()}`,
-        `$${row.total_maintenance_cost.toLocaleString()}`,
-        `$${row.total_revenue.toLocaleString()}`,
-        `$${row.total_operational_cost.toLocaleString()}`,
+        formatCurrency(row.total_fuel_cost),
+        formatCurrency(row.total_maintenance_cost),
+        formatCurrency(row.total_revenue),
+        formatCurrency(row.total_operational_cost),
         `${(row.roi * 100).toFixed(4)}%`,
       ]),
       startY: 74,
@@ -596,10 +597,10 @@ export default function ReportsPage() {
                   Total Ops Cost
                 </p>
                 <p className="text-xl font-bold font-mono">
-                  $
-                  {computedReports
-                    .reduce((sum, r) => sum + r.total_operational_cost, 0)
-                    .toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  {formatCurrency(
+                    computedReports
+                      .reduce((sum, r) => sum + r.total_operational_cost, 0)
+                  )}
                 </p>
               </div>
             </div>
@@ -755,7 +756,7 @@ export default function ReportsPage() {
                       <YAxis
                         fontSize={11}
                         stroke="#888888"
-                        unit=" $"
+                        tickFormatter={(v: number) => formatCurrency(v)}
                         tickLine={false}
                       />
                       <Tooltip
@@ -770,12 +771,12 @@ export default function ReportsPage() {
                                 <p className="font-semibold">
                                   {payload[0].payload.fullName}
                                 </p>
-                                <p className="text-blue-400">Fuel: ${fuel}</p>
+                                <p className="text-blue-400">Fuel: {formatCurrency(Number(fuel))}</p>
                                 <p className="text-orange-400">
-                                  Maint: ${maint}
+                                  Maint: {formatCurrency(Number(maint))}
                                 </p>
                                 <div className="border-t pt-1 mt-1 font-bold text-foreground">
-                                  Total: ${total}
+                                  Total: {formatCurrency(Number(total))}
                                 </div>
                               </div>
                             );
@@ -887,16 +888,16 @@ export default function ReportsPage() {
                           {row.total_distance.toLocaleString()} km
                         </td>
                         <td className="p-3 font-mono text-muted-foreground">
-                          ${row.total_fuel_cost.toLocaleString()}
+                          {formatCurrency(row.total_fuel_cost)}
                         </td>
                         <td className="p-3 font-mono text-muted-foreground">
-                          ${row.total_maintenance_cost.toLocaleString()}
+                          {formatCurrency(row.total_maintenance_cost)}
                         </td>
                         <td className="p-3 font-mono text-muted-foreground">
-                          ${row.total_revenue.toLocaleString()}
+                          {formatCurrency(row.total_revenue)}
                         </td>
                         <td className="p-3 font-mono font-medium">
-                          ${row.total_operational_cost.toLocaleString()}
+                          {formatCurrency(row.total_operational_cost)}
                         </td>
                         <td
                           className={`p-3 font-mono font-bold text-right ${row.roi >= 0 ? "text-emerald-500" : "text-red-500"}`}

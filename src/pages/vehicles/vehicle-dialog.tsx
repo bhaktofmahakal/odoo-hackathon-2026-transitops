@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { canWrite } from "@/lib/permissions";
 import { toast } from "sonner";
 import { FileUp, FileText, Loader2, X, Wrench } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
@@ -364,7 +365,7 @@ export function VehicleDialog({
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
-                  $
+                  ₹
                 </span>
                 <input
                   type="number"
@@ -486,7 +487,7 @@ export function VehicleDialog({
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="font-semibold font-mono text-foreground">
-                          ${log.cost}
+                          {formatCurrency(log.cost)}
                         </span>
                         <StatusBadge status={log.status} />
                       </div>

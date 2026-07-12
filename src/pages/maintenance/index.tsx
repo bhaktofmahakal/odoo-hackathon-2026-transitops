@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { MaintenanceLog, Vehicle } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { canWrite } from "@/lib/permissions";
+import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/loading-skeleton";
@@ -177,7 +178,7 @@ export default function MaintenancePage() {
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
-                  $
+                  ₹
                 </span>
                 <input
                   type="number"
@@ -275,7 +276,7 @@ export default function MaintenancePage() {
                         {log.description}
                       </td>
                       <td className="py-3 px-4 font-mono font-semibold text-foreground">
-                        ${log.cost.toLocaleString()}
+                        {formatCurrency(log.cost)}
                       </td>
                       <td className="py-3 px-4">
                         <StatusBadge status={log.status} />

@@ -219,9 +219,9 @@ export function FuelDialog({ open, onOpenChange, onSuccess }: FuelDialogProps) {
                 Cost *
               </label>
               <div className="relative flex items-center">
-                <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
-                  $
-                </span>
+                  <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                    ₹
+                  </span>
                 <input
                   type="number"
                   step="0.01"

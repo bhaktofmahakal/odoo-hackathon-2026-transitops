@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { FuelLog, Expense, VehicleReport } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { canWrite } from "@/lib/permissions";
+import { formatCurrency } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/loading-skeleton";
 import { FuelDialog } from "./fuel-dialog";
@@ -131,10 +132,7 @@ export default function FuelExpensesPage() {
               Total Fuel Cost
             </p>
             <p className="text-2xl font-bold font-mono">
-              $
-              {totalFuelCost.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {formatCurrency(totalFuelCost)}
             </p>
           </div>
         </div>
@@ -148,10 +146,7 @@ export default function FuelExpensesPage() {
               Tolls & Misc Expenses
             </p>
             <p className="text-2xl font-bold font-mono">
-              $
-              {totalMiscCost.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {formatCurrency(totalMiscCost)}
             </p>
           </div>
         </div>
@@ -246,7 +241,7 @@ export default function FuelExpensesPage() {
                           {log.liters} L
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold">
-                          ${log.cost}
+                          {formatCurrency(log.cost)}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground font-mono">
                           {log.log_date}
@@ -307,7 +302,7 @@ export default function FuelExpensesPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold text-foreground">
-                          ${exp.amount.toLocaleString()}
+                          {formatCurrency(exp.amount)}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground font-mono">
                           {exp.expense_date}
@@ -362,16 +357,16 @@ export default function FuelExpensesPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-muted-foreground font-mono">
-                          ${summary.acquisition_cost.toLocaleString()}
+                          {formatCurrency(summary.acquisition_cost)}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground font-mono">
-                          ${summary.total_maintenance_cost.toLocaleString()}
+                          {formatCurrency(summary.total_maintenance_cost)}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground font-mono">
-                          ${summary.total_fuel_cost.toLocaleString()}
+                          {formatCurrency(summary.total_fuel_cost)}
                         </td>
                         <td className="py-3 px-4 font-mono font-bold text-foreground">
-                          ${summary.total_operational_cost.toLocaleString()}
+                          {formatCurrency(summary.total_operational_cost)}
                         </td>
                         <td className="py-3 px-4 font-mono font-bold text-emerald-500">
                           {summary.roi

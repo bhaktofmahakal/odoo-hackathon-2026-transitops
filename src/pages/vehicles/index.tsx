@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Vehicle } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { canWrite } from "@/lib/permissions";
+import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/loading-skeleton";
@@ -317,7 +318,7 @@ export default function VehiclesPage() {
                       {v.odometer.toLocaleString()} km
                     </td>
                     <td className="py-3 px-4 text-muted-foreground font-mono">
-                      ${v.acquisition_cost.toLocaleString()}
+                      {formatCurrency(v.acquisition_cost)}
                     </td>
                     <td className="py-3 px-4">
                       <StatusBadge status={v.status} />
@@ -365,7 +366,7 @@ export default function VehiclesPage() {
                   <div>
                     <span className="text-muted-foreground">Acq. Cost:</span>{" "}
                     <span className="font-medium font-mono">
-                      ${v.acquisition_cost}
+                      {formatCurrency(v.acquisition_cost)}
                     </span>
                   </div>
                 </div>

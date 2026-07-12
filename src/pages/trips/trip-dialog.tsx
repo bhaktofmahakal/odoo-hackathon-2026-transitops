@@ -194,7 +194,7 @@ export function TripDialog({
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
-                  $
+                  ₹
                 </span>
                 <input
                   type="number"
@@ -219,7 +219,7 @@ export function TripDialog({
             </label>
             <div className="relative flex items-center">
               <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
-                $
+                ₹
               </span>
               <input
                 type="number"
