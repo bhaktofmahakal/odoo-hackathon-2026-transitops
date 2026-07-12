@@ -12,6 +12,7 @@ import {
   Gauge,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Papa from 'papaparse';
 import {
   BarChart,
   Bar,
@@ -164,7 +165,35 @@ export default function ReportsPage() {
       }));
   }, [computedReports]);
   const handleExportCSV = () => {
-    toast.info('Exporting report data to CSV...');
+    if (computedReports.length === 0) {
+      toast.warning('No data available to export');
+      return;
+    }
+
+    const csvData = computedReports.map((row) => ({
+      'Registration Number': row.registration_number,
+      'Name/Model': row.name_model,
+      'Vehicle Type': row.type,
+      'Total Distance (km)': row.total_distance,
+      'Total Fuel Cost ($)': row.total_fuel_cost,
+      'Total Fuel Liters (L)': row.total_fuel_liters,
+      'Total Maintenance Cost ($)': row.total_maintenance_cost,
+      'Total Operational Cost ($)': row.total_operational_cost,
+      'Total Revenue ($)': row.total_revenue,
+      'Fuel Efficiency (km/L)': row.fuel_efficiency,
+      'ROI (%)': (row.roi * 100).toFixed(4),
+    }));
+
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `fleet_operations_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('CSV Report exported successfully');
   };
 
   const handleExportPDF = () => {
