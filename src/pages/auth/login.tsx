@@ -11,17 +11,20 @@ export default function LoginPage() {
   const [role, setRole] = useState<UserRole | "">("");
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    const { error } = await signIn(email, password, role || undefined);
+    const { error: signInError } = await signIn(email, password, role || undefined);
 
-    if (error) {
-      toast.error("Sign in failed", { description: error });
+    if (signInError) {
+      setError(signInError);
+      toast.error("Sign in failed", { description: signInError });
       setLoading(false);
       return;
     }
@@ -106,7 +109,15 @@ export default function LoginPage() {
 
       {/* Right panel — sign in form */}
       <div className="flex flex-1 flex-col items-center justify-center bg-background px-6">
-        <div className="w-full max-w-sm space-y-6">
+        <div className="w-full max-w-sm space-y-6 relative">
+          {/* Error state annotation */}
+          {error && (
+            <div className="absolute -right-4 top-0 w-48 rounded-lg border-2 border-dashed border-red-500/50 bg-red-500/5 p-3 text-xs text-red-500">
+              <p className="font-semibold mb-1">Error state</p>
+              <p>✕ {error}</p>
+              <p className="text-[10px] text-red-400 mt-1">Account locked after 5 failed attempts</p>
+            </div>
+          )}
           {/* Mobile branding */}
           <div className="flex items-center gap-3 mb-4 lg:hidden">
             <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">

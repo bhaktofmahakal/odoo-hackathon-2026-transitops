@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import type { MaintenanceLog, Vehicle } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
@@ -6,9 +6,8 @@ import { canWrite } from "@/lib/permissions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/loading-skeleton";
-import { MaintenanceDialog } from "./maintenance-dialog";
 import { toast } from "sonner";
-import { Wrench, Plus, CheckCircle } from "lucide-react";
+import { Wrench, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function MaintenancePage() {
@@ -19,17 +18,17 @@ export default function MaintenancePage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters state
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [vehicleFilter, setVehicleFilter] = useState<string>("all");
-
-  // Dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // Form state
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [serviceType, setServiceType] = useState("");
+  const [cost, setCost] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [status, setStatus] = useState("In Shop");
+  const [saving, setSaving] = useState(false);
 
   const fetchLogsAndVehicles = async () => {
     setLoading(true);
 
-    // 1. Fetch maintenance logs with vehicle registration
     const { data: logData, error: logError } = await supabase
       .from("maintenance_logs")
       .select("*, vehicles(registration_number, name_model)")
@@ -43,10 +42,10 @@ export default function MaintenancePage() {
       setLogs(logData as MaintenanceLog[]);
     }
 
-    // 2. Fetch all vehicles to populate filter
     const { data: vehicleData } = await supabase
       .from("vehicles")
       .select("*")
+      .neq("status", "Retired")
       .order("registration_number");
 
     if (vehicleData) {
@@ -60,11 +59,59 @@ export default function MaintenancePage() {
     fetchLogsAndVehicles();
   }, []);
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!isManager) return;
+
+    if (!selectedVehicleId) {
+      toast.error("Please select a vehicle");
+      return;
+    }
+    if (!serviceType.trim()) {
+      toast.error("Please enter service type");
+      return;
+    }
+
+    const parsedCost = parseFloat(cost);
+    if (isNaN(parsedCost) || parsedCost < 0) {
+      toast.error("Cost must be a positive number");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const { error } = await supabase.from("maintenance_logs").insert([
+        {
+          vehicle_id: selectedVehicleId,
+          description: serviceType.trim(),
+          cost: parsedCost,
+          status: status,
+          opened_at: date,
+        },
+      ]);
+
+      if (error) throw new Error(error.message);
+
+      toast.success("Maintenance record logged");
+      setSelectedVehicleId("");
+      setServiceType("");
+      setCost("");
+      setDate(new Date().toISOString().split("T")[0]);
+      setStatus("In Shop");
+      fetchLogsAndVehicles();
+    } catch (err: any) {
+      toast.error("Failed to log maintenance", { description: err.message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleCloseMaintenance(logId: string) {
     if (!isManager) return;
 
     const confirmed = window.confirm(
-      "Are you sure you want to mark this maintenance as Completed? This will release the vehicle back to Available and log the expense automatically.",
+      "Mark this maintenance as Completed? Vehicle will be released back to Available.",
     );
     if (!confirmed) return;
 
@@ -74,323 +121,206 @@ export default function MaintenancePage() {
         .update({ status: "Completed", closed_at: new Date().toISOString() })
         .eq("id", logId);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
-      toast.success("Maintenance completed successfully. Expense recorded.");
+      toast.success("Maintenance completed. Vehicle returned to Available.");
       fetchLogsAndVehicles();
     } catch (err: any) {
       toast.error("Failed to complete maintenance", { description: err.message });
     }
   }
 
-  // Filter Logic
-  const filteredLogs = logs.filter((log) => {
-    const matchesStatus = statusFilter === "all" || log.status === statusFilter;
-    const matchesVehicle =
-      vehicleFilter === "all" || log.vehicle_id === vehicleFilter;
-    return matchesStatus && matchesVehicle;
-  });
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Maintenance Logs
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Track and record fleet maintenance logs, costs, and service
-            schedules.
-          </p>
+    <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+      {/* Left side — Log Service Record Form */}
+      <div className="w-full lg:w-[380px] border-r bg-card flex flex-col overflow-y-auto p-6 flex-shrink-0">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold tracking-tight">Log Service Record</h2>
         </div>
 
-        {isManager && (
-          <Button
-            onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-1.5 self-start"
-          >
-            <Plus className="size-4" />
-            Log Maintenance
-          </Button>
-        )}
-      </div>
-
-      {/* Filters bar */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-card border rounded-xl p-4">
-        {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <option value="all">All Statuses</option>
-          <option value="In Shop">In Shop</option>
-          <option value="Completed">Completed</option>
-        </select>
-
-        {/* Vehicle Filter */}
-        <select
-          value={vehicleFilter}
-          onChange={(e) => setVehicleFilter(e.target.value)}
-          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <option value="all">All Vehicles</option>
-          {vehicles.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name_model} ({v.registration_number})
-            </option>
-          ))}
-        </select>
-
-        {(statusFilter !== "all" || vehicleFilter !== "all") && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setStatusFilter("all");
-              setVehicleFilter("all");
-            }}
-            className="text-xs text-amber-500 hover:text-amber-400 self-start"
-          >
-            Clear Filters
-          </Button>
-        )}
-      </div>
-
-      {/* Summary bar */}
-      {!loading && logs.length > 0 && (
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-orange-400" />
-            In Shop: <strong className="text-foreground font-semibold">{logs.filter((l) => l.status === "In Shop").length}</strong>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-emerald-400" />
-            Completed: <strong className="text-foreground font-semibold">{logs.filter((l) => l.status === "Completed").length}</strong>
-          </span>
-          <span className="ml-auto font-medium">
-            Total: <strong className="text-foreground">{logs.length}</strong>
-          </span>
-        </div>
-      )}
-
-      {/* Flow diagram */}
-      <div className="rounded-xl border bg-card p-4">
-        <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase mb-4">
-          Vehicle Status Flow
-        </h3>
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          {/* Available node */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-              Available
-            </div>
-            <span className="text-[10px] text-muted-foreground text-center max-w-[100px]">
-              Create quality maintenance record
-            </span>
-          </div>
-
-          {/* Arrow right */}
-          <div className="flex flex-col items-center gap-1">
-            <svg className="w-12 h-4 text-muted-foreground" viewBox="0 0 48 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 8h40M40 4l4 4-4 4" />
-            </svg>
-          </div>
-
-          {/* In Shop node */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-400 font-semibold text-sm">
-              In Shop
-            </div>
-            <span className="text-[10px] text-muted-foreground text-center max-w-[100px]">
-              Maintenance completed
-            </span>
-          </div>
-
-          {/* Arrow back */}
-          <div className="flex flex-col items-center gap-1">
-            <svg className="w-12 h-4 text-muted-foreground rotate-180" viewBox="0 0 48 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 8h40M40 4l4 4-4 4" />
-            </svg>
-          </div>
-
-          {/* Available node again */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-              Available
-            </div>
-            <span className="text-[10px] text-muted-foreground text-center max-w-[100px]">
-              Vehicle returned to fleet
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* List content */}
-      {loading ? (
-        <TableSkeleton rows={5} columns={6} />
-      ) : filteredLogs.length === 0 ? (
-        <EmptyState
-          icon={<Wrench className="size-6 text-muted-foreground" />}
-          title="No maintenance logs found"
-          description={
-            statusFilter !== "all" || vehicleFilter !== "all"
-              ? "Try modifying your filter settings"
-              : "Add your first maintenance log to get started"
-          }
-          action={
-            isManager && statusFilter === "all" && vehicleFilter === "all" ? (
-              <Button onClick={() => setDialogOpen(true)} size="sm">
-                Log Maintenance
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <>
-          {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border bg-card overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
-                  <th className="pb-3 pt-3 px-4">Vehicle</th>
-                  <th className="pb-3 pt-3 px-4">Description</th>
-                  <th className="pb-3 pt-3 px-4">Cost</th>
-                  <th className="pb-3 pt-3 px-4">Opened Date</th>
-                  <th className="pb-3 pt-3 px-4">Closed Date</th>
-                  <th className="pb-3 pt-3 px-4">Status</th>
-                  {isManager && (
-                    <th className="pb-3 pt-3 px-4 text-right">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filteredLogs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="py-3 px-4 font-semibold">
-                      {log.vehicles?.name_model ?? "—"}{" "}
-                      <span className="text-xs text-muted-foreground font-normal">
-                        ({log.vehicles?.registration_number ?? "—"})
-                      </span>
-                    </td>
-                    <td
-                      className="py-3 px-4 text-muted-foreground max-w-sm truncate"
-                      title={log.description}
-                    >
-                      {log.description}
-                    </td>
-                    <td className="py-3 px-4 font-mono font-semibold text-foreground">
-                      ${log.cost.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground font-mono">
-                      {new Date(log.opened_at).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground font-mono">
-                      {log.closed_at
-                        ? new Date(log.closed_at).toLocaleDateString()
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge status={log.status} />
-                    </td>
-                    {isManager && (
-                      <td className="py-3 px-4 text-right">
-                        {log.status === "In Shop" && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleCloseMaintenance(log.id)}
-                            className="bg-emerald-600 hover:bg-emerald-700 h-8"
-                          >
-                            <CheckCircle className="size-3.5 mr-1" />
-                            Complete
-                          </Button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Card Grid View */}
-          <div className="grid grid-cols-1 gap-4 md:hidden">
-            {filteredLogs.map((log) => (
-              <div
-                key={log.id}
-                className="rounded-xl border bg-card p-4 space-y-3 shadow-sm"
+        {isManager ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Vehicle *
+              </label>
+              <select
+                value={selectedVehicleId}
+                onChange={(e) => setSelectedVehicleId(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <div className="flex items-start justify-between border-b pb-2">
-                  <div>
-                    <h3 className="font-bold text-base leading-none">
-                      {log.vehicles?.name_model ?? "Vehicle"}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {log.vehicles?.registration_number ?? "—"}
-                    </p>
-                  </div>
-                  <StatusBadge status={log.status} />
-                </div>
+                <option value="">Select a Vehicle</option>
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name_model} ({v.registration_number})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                <p className="text-xs text-muted-foreground">
-                  {log.description}
-                </p>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Service Type *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Oil Change"
+                value={serviceType}
+                onChange={(e) => setServiceType(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
 
-                <div className="grid grid-cols-2 gap-y-2 text-xs border-t pt-2 mt-1">
-                  <div>
-                    <span className="text-muted-foreground">Cost:</span>{" "}
-                    <span className="font-semibold font-mono">${log.cost}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Opened:</span>{" "}
-                    <span className="font-medium font-mono">
-                      {new Date(log.opened_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {log.closed_at && (
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Closed:</span>{" "}
-                      <span className="font-medium font-mono">
-                        {new Date(log.closed_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {isManager && log.status === "In Shop" && (
-                  <div className="flex items-center justify-end border-t pt-2 mt-1">
-                    <Button
-                      size="sm"
-                      onClick={() => handleCloseMaintenance(log.id)}
-                      className="bg-emerald-600 hover:bg-emerald-700 w-full"
-                    >
-                      <CheckCircle className="size-3.5 mr-1" />
-                      Complete Maintenance
-                    </Button>
-                  </div>
-                )}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Cost *
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                  $
+                </span>
+                <input
+                  type="number"
+                  placeholder="e.g. 2500"
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent pl-6 pr-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
-            ))}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Date *
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="In Shop">In Shop</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={saving}
+              className="w-full mt-4"
+            >
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </form>
+        ) : (
+          <EmptyState
+            title="Read-only mode"
+            description="Only managers can log maintenance records."
+            className="p-6 border-dashed"
+          />
+        )}
+      </div>
+
+      {/* Right side — Service Log Table */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
+        <div className="border-b p-6 flex-shrink-0">
+          <h1 className="text-xl font-bold tracking-tight">Service Log</h1>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <TableSkeleton rows={5} columns={4} />
+          ) : logs.length === 0 ? (
+            <EmptyState
+              icon={<Wrench className="size-6 text-muted-foreground" />}
+              title="No maintenance logs"
+              description="Log your first service record to get started"
+            />
+          ) : (
+            <div className="rounded-xl border bg-card overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
+                    <th className="pb-3 pt-3 px-4">Vehicle</th>
+                    <th className="pb-3 pt-3 px-4">Service</th>
+                    <th className="pb-3 pt-3 px-4">Cost</th>
+                    <th className="pb-3 pt-3 px-4">Status</th>
+                    {isManager && <th className="pb-3 pt-3 px-4 text-right">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {logs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-semibold">
+                        {log.vehicles?.name_model ?? "—"}{" "}
+                        <span className="text-xs text-muted-foreground font-normal">
+                          ({log.vehicles?.registration_number ?? "—"})
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-muted-foreground">
+                        {log.description}
+                      </td>
+                      <td className="py-3 px-4 font-mono font-semibold text-foreground">
+                        ${log.cost.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        <StatusBadge status={log.status} />
+                      </td>
+                      {isManager && (
+                        <td className="py-3 px-4 text-right">
+                          {log.status === "In Shop" && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleCloseMaintenance(log.id)}
+                              className="bg-emerald-600 hover:bg-emerald-700 h-8"
+                            >
+                              <CheckCircle className="size-3.5 mr-1" />
+                              Complete
+                            </Button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Flow diagram and note - below the two columns on larger screens */}
+      <div className="absolute bottom-0 left-[380px] right-0 bg-background border-t p-4 hidden lg:block">
+        <div className="flex items-center justify-center gap-6 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Available</span>
+            <span className="text-xs text-muted-foreground">→ (quality maintenance record) →</span>
+            <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">In Shop</span>
           </div>
-        </>
-      )}
-
-      {/* Dialog */}
-      <MaintenanceDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={fetchLogsAndVehicles}
-      />
-
-      {/* Info note */}
-      <p className="text-xs text-muted-foreground italic">
-        In Shop vehicles are removed from the dispatch pool
-      </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">In Shop</span>
+            <span className="text-xs text-muted-foreground">→ (maintenance completed) →</span>
+            <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Available</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground italic text-center">
+          Note: In Shop vehicles are removed from the dispatch pool.
+        </p>
+      </div>
     </div>
   );
 }

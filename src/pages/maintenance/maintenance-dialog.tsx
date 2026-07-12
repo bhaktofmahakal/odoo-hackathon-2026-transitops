@@ -26,8 +26,10 @@ export function MaintenanceDialog({
 }: MaintenanceDialogProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
-  const [description, setDescription] = useState("");
+  const [serviceType, setServiceType] = useState("");
   const [cost, setCost] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [status, setStatus] = useState("In Shop");
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -69,8 +71,10 @@ export function MaintenanceDialog({
 
     fetchAvailableVehicles();
     setSelectedVehicleId("");
-    setDescription("");
+    setServiceType("");
     setCost("");
+    setDate(new Date().toISOString().split("T")[0]);
+    setStatus("In Shop");
     setErrors({});
   }, [open]);
 
@@ -79,7 +83,7 @@ export function MaintenanceDialog({
 
     const newErrors: Record<string, string> = {};
     if (!selectedVehicleId) newErrors.vehicleId = "Please select a vehicle";
-    if (!description.trim()) newErrors.description = "Description is required";
+    if (!serviceType.trim()) newErrors.serviceType = "Service type is required";
 
     const parsedCost = parseFloat(cost);
     if (isNaN(parsedCost) || parsedCost < 0) {
@@ -97,9 +101,10 @@ export function MaintenanceDialog({
       const { error } = await supabase.from("maintenance_logs").insert([
         {
           vehicle_id: selectedVehicleId,
-          description: description.trim(),
+          description: serviceType.trim(),
           cost: parsedCost,
-          status: "In Shop",
+          status: status,
+          opened_at: date,
         },
       ]);
 
@@ -159,19 +164,19 @@ export function MaintenanceDialog({
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Description *
+              Service Type *
             </label>
             <input
               type="text"
-              placeholder="e.g. Brake pad replacement & fluid flush"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Oil Change"
+              value={serviceType}
+              onChange={(e) => setServiceType(e.target.value)}
               className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                errors.description ? "border-destructive" : "border-input"
+                errors.serviceType ? "border-destructive" : "border-input"
               }`}
             />
-            {errors.description && (
-              <p className="text-xs text-destructive">{errors.description}</p>
+            {errors.serviceType && (
+              <p className="text-xs text-destructive">{errors.serviceType}</p>
             )}
           </div>
 
@@ -185,7 +190,7 @@ export function MaintenanceDialog({
               </span>
               <input
                 type="number"
-                placeholder="e.g. 250"
+                placeholder="e.g. 2500"
                 value={cost}
                 onChange={(e) => setCost(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent pl-6 pr-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
@@ -196,6 +201,32 @@ export function MaintenanceDialog({
             {errors.cost && (
               <p className="text-xs text-destructive">{errors.cost}</p>
             )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Date *
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="In Shop">In Shop</option>
+              <option value="Completed">Completed</option>
+            </select>
           </div>
 
           <DialogFooter className="pt-2">

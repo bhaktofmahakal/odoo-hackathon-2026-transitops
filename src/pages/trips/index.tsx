@@ -466,7 +466,7 @@ export default function TripsPage() {
                 className="w-full flex items-center justify-center gap-1.5"
               >
                 <Play className="size-4" />
-                Dispatch Directly
+                {isOverload ? "Dispatch (blocked)" : "Dispatch"}
               </Button>
               <Button
                 type="button"
@@ -474,7 +474,7 @@ export default function TripsPage() {
                 onClick={() => handleCreateTrip(true)}
                 className="w-full flex items-center justify-center gap-1.5"
               >
-                Save as Draft
+                Cancel
               </Button>
             </div>
           </div>
@@ -635,6 +635,13 @@ export default function TripsPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Bottom note */}
+      <div className="absolute bottom-0 left-[380px] right-0 bg-background border-t p-4 hidden lg:block">
+        <p className="text-xs text-muted-foreground italic">
+          On Complete: mileage → Fuel log → expenses → Vehicle & Driver Available
+        </p>
       </div>
 
       {/* Completion Dialog */}
