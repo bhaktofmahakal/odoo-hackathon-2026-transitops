@@ -41,7 +41,7 @@
 │   ├── index.css                        # Tailwind v4 config + dark mode styles
 │   │
 │   ├── context/
-│   │   ├── auth-context.tsx             # Auth state, signIn/signUp/signOut, RBAC
+│   │   ├── auth-context.tsx             # Auth state, signIn/signUp/signOut/resetPassword/updatePassword
 │   │   └── theme-context.tsx            # Dark/light mode toggle
 │   │
 │   ├── lib/
@@ -53,17 +53,17 @@
 │   │
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── app-layout.tsx           # Main app shell (sidebar + topbar + outlet)
+│   │   │   ├── app-layout.tsx           # Main app shell (desktop sidebar + mobile Sheet drawer + topbar)
 │   │   │   ├── protected-route.tsx      # Auth guard wrapper
-│   │   │   ├── sidebar.tsx              # Navigation sidebar with role-based menu
-│   │   │   └── topbar.tsx              # Top bar with search, theme toggle, logout
+│   │   │   ├── sidebar.tsx              # Navigation sidebar (hidden md:flex desktop, Sheet on mobile)
+│   │   │   └── topbar.tsx              # Top bar (hamburger on mobile, search, theme, logout)
 │   │   │
 │   │   └── ui/
 │   │       ├── avatar.tsx
 │   │       ├── badge.tsx
 │   │       ├── button.tsx
 │   │       ├── card.tsx
-│   │       ├── dialog.tsx               # Modal dialog (p-5/gap-5/sm:p-6)
+│   │       ├── dialog.tsx               # Modal dialog (max-w-[calc(100%-2rem)] mobile, sm:max-w-sm+)
 │   │       ├── dropdown-menu.tsx
 │   │       ├── empty-state.tsx          # Reusable empty state component
 │   │       ├── input.tsx
@@ -71,7 +71,7 @@
 │   │       ├── role-selector.tsx        # Pill-button role chips (login/signup)
 │   │       ├── select.tsx
 │   │       ├── separator.tsx
-│   │       ├── sheet.tsx
+│   │       ├── sheet.tsx                # Sheet drawer (used for mobile sidebar)
 │   │       ├── skeleton.tsx
 │   │       ├── sonner.tsx               # Toast notifications
 │   │       ├── status-badge.tsx         # Color-coded status badges
@@ -85,36 +85,36 @@
 │       │   └── reset-password.tsx       # Password reset form (token from email link)
 │       │
 │       ├── dashboard/
-│       │   ├── index.tsx                # Dashboard layout + data fetching
+│       │   ├── index.tsx                # Dashboard + FILTERED data fetching (type/status/region filters wired)
 │       │   ├── kpi-cards.tsx            # 7 KPI metric cards
-│       │   ├── recent-trips.tsx         # Recent trips table
+│       │   ├── recent-trips.tsx         # Recent trips (table on desktop, cards on mobile)
 │       │   └── vehicle-status-chart.tsx # Horizontal bar chart
 │       │
 │       ├── drivers/
-│       │   ├── index.tsx                # Driver list + toggle status + trip compliance
+│       │   ├── index.tsx                # Driver list (table desktop, cards mobile) + toggle status
 │       │   └── driver-dialog.tsx        # Add/edit driver modal
 │       │
 │       ├── fuel-expenses/
-│       │   ├── index.tsx                # Fuel & expense records list
+│       │   ├── index.tsx                # Fuel & expense records (3 tabs: fuel/expenses/summary)
 │       │   ├── expense-dialog.tsx       # Add expense modal
 │       │   └── fuel-dialog.tsx          # Add fuel record modal
 │       │
 │       ├── maintenance/
-│       │   ├── index.tsx                # Maintenance logs + flow diagram
+│       │   ├── index.tsx                # Maintenance logs (two-column: form left, table right)
 │       │   └── maintenance-dialog.tsx   # Log maintenance modal
 │       │
 │       ├── reports/
-│       │   └── index.tsx                # Analytics + charts + PDF export
+│       │   └── index.tsx                # Analytics + charts + CSV/PDF export
 │       │
 │       ├── settings/
-│       │   └── index.tsx                # User profile + avatar upload
+│       │   └── index.tsx                # User profile + avatar upload (bonus, not in PRD)
 │       │
 │       ├── trips/
-│       │   ├── index.tsx                # Trip dispatcher + lifecycle bar
+│       │   ├── index.tsx                # Trip dispatcher (split layout + lifecycle bar)
 │       │   └── trip-dialog.tsx          # Trip completion modal
 │       │
 │       └── vehicles/
-│           ├── index.tsx                # Vehicle registry + reg search
+│           ├── index.tsx                # Vehicle registry (table desktop, cards mobile)
 │           └── vehicle-dialog.tsx       # Add/edit vehicle modal
 │
 ├── supabase/
@@ -123,27 +123,21 @@
 │   │   └── 20260712000000_profiles_and_role_selection.sql
 │   └── functions/
 │       └── check-license-expiry/
-│           └── index.ts                 # Resend email edge function
+│           └── index.ts                 # License expiry email edge function (Deno)
 │
+├── transitops_schema.sql                # Full DB schema (idempotent, safe to re-run)
 ├── public/
 │   ├── logo.png                         # App logo
 │   └── login-banner.png                 # Login left panel background
 │
 ├── mockup/                              # Hand-drawn design mockups
-│   ├── auth-rbac.png
-│   ├── dashboard.png
-│   ├── drivers-safety.png
-│   ├── maintainence.png
-│   ├── trip-dispatcher.png
-│   └── vehicle resgistry.png
-│
 ├── index.html                           # Vite SPA entry
 ├── package.json                         # Dependencies
 ├── vite.config.ts                       # Vite + React + Tailwind v4 plugin
 ├── tsconfig.json                        # TypeScript config
 ├── components.json                      # shadcn/ui config
-├── .env                                 # Environment variables (gitignored)
-├── .env.example                         # Env template
+├── .env                                 # Environment variables (gitignored, NOT in git history)
+├── .env.example                         # Env template (all 11 keys)
 ├── PRD.md                               # Product requirements document
 └── AGENTS.md                            # This file
 ```
@@ -166,30 +160,39 @@
 - `canWrite(role, resource)` — returns boolean for write access
 - `canAccessNav(role, navItem)` — returns boolean for sidebar nav visibility
 
-**Sidebar navigation** is filtered per role via `canAccessNav()`.
+**Sidebar navigation** is filtered per role via `canAccessNav()`. Mobile uses Sheet drawer.
 
 ### 2. Database Schema (Supabase PostgreSQL)
 
-Key tables:
-- `profiles` — user id, email, full_name, role, region, avatar_url
-- `vehicles` — registration_number (unique), name_model, type, max_load_capacity, odometer, acquisition_cost, status (Available/On Trip/In Shop/Retired)
-- `drivers` — name, license_no, license_expiry_date, contact, category, trip_compliance, safety_score, status (Available/On Trip/Off Duty/Suspended)
-- `trips` — source, destination, vehicle_id, driver_id, cargo_weight, planned_distance, status (Draft/Dispatched/Completed/Cancelled), created_by
-- `maintenance_logs` — vehicle_id, description, cost, status (In Shop/Completed), opened_at, closed_at
-- `fuel_records` — vehicle_id, date, liters, cost_per_liter, total_cost, odometer
-- `expenses` — vehicle_id, date, category, amount, notes
+Key tables (see `transitops_schema.sql` for full DDL):
+- `profiles` — id, full_name, email, role, region, created_at, updated_at
+- `vehicles` — id, registration_number (unique), name_model, type, max_load_capacity, odometer, acquisition_cost, region, status (Available/On Trip/In Shop/Retired), document_url
+- `drivers` — id, profile_id, name, **license_number** (unique), license_category, license_expiry_date, contact_number, safety_score, status (Available/On Trip/Off Duty/Suspended)
+- `trips` — id, source, destination, vehicle_id, driver_id, cargo_weight, planned_distance, final_odometer, fuel_consumed, revenue, status (Draft/Dispatched/Completed/Cancelled), dispatched_at, completed_at, cancelled_at, created_by
+- `maintenance_logs` — id, vehicle_id, description, cost, status (**In Shop/Completed**), opened_at, closed_at
+- `fuel_logs` — id, vehicle_id, trip_id, liters, cost, log_date, created_at
+- `expenses` — id, vehicle_id, trip_id, category, amount, expense_date, created_at
+- `notifications` — id, recipient_id, type, message, is_read, created_at
 
-**Triggers:**
+**Triggers (fire on INSERT OR UPDATE):**
 - `on_auth_user_created` — auto-creates profile row on signup
-- Trip constraints — validates vehicle/driver availability, license expiry, cargo capacity
+- `trg_0_trip_validate` — validates vehicle/driver availability, license expiry, cargo capacity before dispatch
+- `trg_1_trip_status_cascade` — cascades vehicle/driver status on Dispatch/Complete/Cancel (fires on both INSERT and UPDATE)
+- `trg_prevent_double_active_trip` — prevents double-booking a vehicle or driver (fires on both INSERT and UPDATE)
+- `trg_maintenance_status_cascade` — sets vehicle In Shop on maintenance open, Available on close + auto-logs expense
+
+**Views:**
+- `v_dashboard_kpis` — pre-computed dashboard metrics
+- `v_vehicle_report` — per-vehicle operational cost, fuel efficiency, ROI
 
 ### 3. Supabase Edge Functions
 
 **`check-license-expiry`** (`supabase/functions/check-license-expiry/index.ts`):
 - Runs daily via pg_cron at 8am IST
-- Queries drivers with licenses expiring within 30 days
-- Sends branded HTML email via Resend API
-- Uses service role key for database access
+- Queries drivers with licenses expiring within 7 days
+- Sends branded email via Resend API
+- Uses `SERVICE_ROLE_KEY` secret (not `SUPABASE_SERVICE_ROLE_KEY` — that prefix is reserved)
+- Function is `SECURITY DEFINER` to bypass RLS for notifications insert
 
 ### 4. Storage Buckets
 
@@ -202,6 +205,14 @@ Key tables:
 - Tailwind v4 CSS-first config in `src/index.css`
 - Custom dark mode styles for select options (`.dark select option`)
 
+### 6. Responsive Design
+
+- **Mobile sidebar:** Hamburger button in topbar opens Sheet drawer (left side)
+- **Tables:** Desktop table view (`hidden md:block`) + mobile card grid (`md:hidden`) on Vehicles, Drivers, Recent Trips
+- **Split layouts:** Trips and Maintenance use `flex-col lg:flex-row` stacking
+- **Dialogs:** Base `max-w-[calc(100%-2rem)]` for mobile, page-specific `sm:max-w-*` for desktop
+- **KPI cards:** `grid-cols-2 sm:grid-cols-3 lg:grid-cols-7`
+
 ---
 
 ## Key Files Reference
@@ -210,6 +221,8 @@ Key tables:
 - `signIn(email, password, expectedRole?)` — validates role after login
 - `signUp(email, password, role, fullName)` — upserts profile with role
 - `signOut()` — clears session
+- `resetPassword(email)` — sends reset email via Supabase SDK
+- `updatePassword(newPassword)` — updates password (from reset link)
 - `profile` — current user profile object
 - `role` — current user's role string
 
@@ -220,65 +233,55 @@ canAccessNav(role: UserRole, navItem: string): boolean
 ```
 
 ### Types (`src/lib/types.ts`)
-All TypeScript interfaces: `Vehicle`, `Driver`, `Trip`, `MaintenanceLog`, `FuelRecord`, `Expense`, `Profile`, `UserRole`, `VehicleStatus`, `TripStatus`, `MaintenanceStatus`, `DashboardKPIs`
+All TypeScript interfaces: `Vehicle`, `Driver`, `Trip`, `MaintenanceLog`, `FuelLog`, `Expense`, `Profile`, `Notification`, `UserRole`, `VehicleStatus`, `DriverStatus`, `TripStatus`, `MaintenanceStatus`, `DashboardKPIs`, `VehicleReport`
 
 ### Status Badge (`src/components/ui/status-badge.tsx`)
-Color-coded badges for: Available (green), On Trip (blue), In Shop (orange), Retired (red), Draft (yellow), Dispatched (blue), Completed (green), Cancelled (red), Available (green), Off Duty (gray), Suspended (red)
-
-### Reports (`src/pages/reports/index.tsx`)
-- Charts: Vehicle Type Distribution (Bar), Fuel Trend (Line), Maintenance Cost by Type (Pie), Expense Breakdown (Pie)
-- PDF export: jsPDF + jspdf-autotable generates multi-page report with table data
-- All charts use `ResponsiveContainer` with height `{288}`
+Color-coded badges for: Available (green), On Trip (blue), In Shop (orange), Retired (red), Draft (zinc), Dispatched (blue), Completed (green), Cancelled (red), Off Duty (zinc), Suspended (red)
 
 ### Dashboard (`src/pages/dashboard/`)
-- `kpi-cards.tsx` — 7 KPI cards in responsive grid (2 cols → 3 cols → 7 cols)
-- `recent-trips.tsx` — Table with TRIP, VEHICLE, DRIVER, STATUS, ETA columns
-- `vehicle-status-chart.tsx` — Horizontal bar chart (Available/On Trip/In Shop/Retired)
+- `index.tsx` — FILTERED data fetching: unfiltered uses `v_dashboard_kpis` view, filtered queries raw tables with `.eq()/.in()` and computes KPIs in JS
+- `kpi-cards.tsx` — 7 KPI cards in responsive grid
+- `recent-trips.tsx` — Desktop table + mobile card stack
+- `vehicle-status-chart.tsx` — Horizontal bar chart
+
+### Reports (`src/pages/reports/index.tsx`)
+- Charts: Fuel Efficiency (Bar), Fuel Trend (Line), Maintenance Cost (Pie), Expense Breakdown (Pie)
+- CSV export: `handleExportCSV` generates downloadable CSV
+- PDF export: jsPDF + jspdf-autotable generates multi-page report
+- All charts use `ResponsiveContainer` with height `{288}`
 
 ---
 
 ## Environment Variables
 
-| Key | Purpose |
-|-----|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL (frontend) |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon key (frontend) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (edge functions) |
-| `SUPABASE_SECRET_KEY` | Secret key (edge functions) |
-| `DATABASE_URL` | Direct database connection |
-| `DB_HOST` | Database host |
-| `DB_PORT` | Database port |
-| `DB_NAME` | Database name |
-| `DB_USER` | Database user |
-| `DB_PASSWORD` | Database password |
-| `RESEND_API_KEY` | Resend email API key |
+| Key | Purpose | Where |
+|-----|---------|-------|
+| `VITE_SUPABASE_URL` | Supabase project URL | Frontend (.env) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key | Frontend (.env) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key | .env (for reference only) |
+| `SERVICE_ROLE_KEY` | Service role key | Edge Function Secret (no SUPABASE_ prefix) |
+| `RESEND_API_KEY` | Resend email API key | Edge Function Secret |
+| `SUPABASE_SECRET_KEY` | Secret key | .env |
+| `DATABASE_URL` | Direct database connection | .env |
+| `DB_HOST` | Database host | .env |
+| `DB_PORT` | Database port | .env |
+| `DB_NAME` | Database name | .env |
+| `DB_USER` | Database user | .env |
+| `DB_PASSWORD` | Database password | .env |
 
 ---
 
 ## Development Commands
 
 ```bash
-npm install              # Install dependencies
-npm run dev              # Start Vite dev server
-npm run build            # Production build
-npx tsc --noEmit         # Type check
-supabase start           # Start local Supabase (requires Docker)
-supabase db push         # Push migrations to remote
-supabase functions deploy check-license-expiry  # Deploy edge function
+npm install                          # Install dependencies
+npm run dev                          # Start Vite dev server (port 5173)
+npm run build                        # Production build
+npx tsc --noEmit                     # Type check
+npx supabase link --project-ref cuqjoeelysjqdxvxskpv  # Link to remote project
+npx supabase functions deploy check-license-expiry --use-docker false  # Deploy edge function
+npx supabase secrets set SERVICE_ROLE_KEY=xxx RESEND_API_KEY=xxx  # Set edge function secrets
 ```
-
----
-
-## Git History
-
-Commits are on `main` branch. Key commits:
-1. Initial setup + full RBAC auth
-2. Dashboard, vehicle registry, drivers pages
-3. Trip dispatcher with capacity validation
-4. Maintenance logs with In Shop/Completed statuses
-5. Reports with charts + PDF export
-6. Settings page + dark mode
-7. Login/signup mockup matching (role chips, remember me, reg search, trip lifecycle, maintenance flow)
 
 ---
 
@@ -286,14 +289,25 @@ Commits are on `main` branch. Key commits:
 
 - **Frontend:** Vite builds to `dist/` — deployable to any static host
 - **Supabase:** Remote project `cugjoeelysjqdxvxskpv`
-- **Edge Functions:** Deployed via `supabase functions deploy`
+- **Edge Functions:** Deployed via `supabase functions deploy --use-docker false`
+- **Secrets:** Set via `supabase secrets set` (cannot use `SUPABASE_` prefix)
 - **Cron:** pg_cron job runs `check-license-expiry` daily at 8am IST
+- **Schema:** `transitops_schema.sql` is fully idempotent (IF NOT EXISTS everywhere), safe to re-run
 
 ---
 
 ## Known Issues
 
-1. `.env` is committed to git with live credentials — needs rotation
+1. `.env` is gitignored and was NEVER committed to git — no key rotation needed
 2. Email templates removed from repo — configure via Supabase Dashboard → Auth → Email Templates
 3. No custom SMTP configured — email confirmation may need to be disabled
-4. `.env.example` only has 2 keys — should include all 11 keys
+4. Dashboard filters: when active, KPIs computed from raw filtered data (not from view)
+
+---
+
+## Security Notes
+
+- `.env` is in `.gitignore` — never tracked by git
+- Edge function uses `SERVICE_ROLE_KEY` (not `SUPABASE_SERVICE_ROLE_KEY`) because Supabase reserves the `SUPABASE_` prefix for custom secrets
+- `fn_check_license_expiry` is `SECURITY DEFINER` to bypass RLS for notifications insert
+- RLS enabled on all tables with role-based policies
