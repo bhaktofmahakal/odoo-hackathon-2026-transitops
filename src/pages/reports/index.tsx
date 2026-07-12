@@ -362,11 +362,15 @@ export default function ReportsPage() {
           {/* Filters Bar */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-card border rounded-xl p-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <label 
+                htmlFor="filter-start-date"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1"
+              >
                 <Calendar className="size-3" />
                 Start Date
               </label>
               <input
+                id="filter-start-date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -375,11 +379,15 @@ export default function ReportsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <label 
+                htmlFor="filter-end-date"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1"
+              >
                 <Calendar className="size-3" />
                 End Date
               </label>
               <input
+                id="filter-end-date"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
@@ -388,11 +396,15 @@ export default function ReportsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <label 
+                htmlFor="filter-vehicle-type"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1"
+              >
                 <Truck className="size-3" />
                 Vehicle Type
               </label>
               <select
+                id="filter-vehicle-type"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -407,12 +419,16 @@ export default function ReportsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <label 
+                htmlFor="filter-region"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1"
+              >
                 <MapPin className="size-3" />
                 Region
               </label>
               <div className="flex gap-2">
                 <select
+                  id="filter-region"
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
                   className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
