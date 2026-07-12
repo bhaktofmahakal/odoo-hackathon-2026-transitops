@@ -1,18 +1,38 @@
 -- ============================================================
--- TransitOps — Full Supabase Schema
+-- TransitOps — Full Supabase Schema (Idempotent)
 -- Covers: Auth/RBAC, Vehicles, Drivers, Trips, Maintenance,
 -- Fuel/Expenses, Reports, Documents, Notifications/Reminders
+-- Safe to re-run: uses IF NOT EXISTS / IF EXISTS throughout
 -- ============================================================
 
 -- ---------- ENUMS ----------
-create type user_role as enum ('fleet_manager', 'driver', 'safety_officer', 'financial_analyst');
-create type vehicle_status as enum ('Available', 'On Trip', 'In Shop', 'Retired');
-create type driver_status as enum ('Available', 'On Trip', 'Off Duty', 'Suspended');
-create type trip_status as enum ('Draft', 'Dispatched', 'Completed', 'Cancelled');
-create type maintenance_status as enum ('In Shop', 'Completed');
+DO $$ BEGIN
+  CREATE TYPE user_role AS ENUM ('fleet_manager', 'driver', 'safety_officer', 'financial_analyst');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE vehicle_status AS ENUM ('Available', 'On Trip', 'In Shop', 'Retired');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE driver_status AS ENUM ('Available', 'On Trip', 'Off Duty', 'Suspended');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE trip_status AS ENUM ('Draft', 'Dispatched', 'Completed', 'Cancelled');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE maintenance_status AS ENUM ('In Shop', 'Completed');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- ---------- PROFILES (extends auth.users) ----------
-create table profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text not null,
   email text not null,
@@ -22,25 +42,25 @@ create table profiles (
 );
 
 -- ---------- VEHICLES ----------
-create table vehicles (
+CREATE TABLE IF NOT EXISTS vehicles (
   id uuid primary key default gen_random_uuid(),
   registration_number text unique not null,
   name_model text not null,
-  type text not null,               -- Truck, Van, Bike, etc.
+  type text not null,
   max_load_capacity numeric not null,
   odometer numeric default 0,
   acquisition_cost numeric not null,
   region text,
   status vehicle_status not null default 'Available',
-  document_url text,                -- Supabase storage link (bonus: doc management)
+  document_url text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 -- ---------- DRIVERS ----------
-create table drivers (
+CREATE TABLE IF NOT EXISTS drivers (
   id uuid primary key default gen_random_uuid(),
-  profile_id uuid references profiles(id),  -- link to auth user if driver logs in
+  profile_id uuid references profiles(id),
   name text not null,
   license_number text unique not null,
   license_category text not null,
@@ -53,7 +73,7 @@ create table drivers (
 );
 
 -- ---------- TRIPS ----------
-create table trips (
+CREATE TABLE IF NOT EXISTS trips (
   id uuid primary key default gen_random_uuid(),
   source text not null,
   destination text not null,
@@ -73,18 +93,18 @@ create table trips (
 );
 
 -- ---------- MAINTENANCE LOGS ----------
-create table maintenance_logs (
+CREATE TABLE IF NOT EXISTS maintenance_logs (
   id uuid primary key default gen_random_uuid(),
   vehicle_id uuid not null references vehicles(id),
   description text not null,
   cost numeric default 0,
-  status maintenance_status not null default 'Active',
+  status maintenance_status not null default 'In Shop',
   opened_at timestamptz default now(),
   closed_at timestamptz
 );
 
 -- ---------- FUEL LOGS ----------
-create table fuel_logs (
+CREATE TABLE IF NOT EXISTS fuel_logs (
   id uuid primary key default gen_random_uuid(),
   vehicle_id uuid not null references vehicles(id),
   trip_id uuid references trips(id),
@@ -95,21 +115,21 @@ create table fuel_logs (
 );
 
 -- ---------- EXPENSES (tolls, misc) ----------
-create table expenses (
+CREATE TABLE IF NOT EXISTS expenses (
   id uuid primary key default gen_random_uuid(),
   vehicle_id uuid not null references vehicles(id),
   trip_id uuid references trips(id),
-  category text not null,   -- toll, misc, maintenance (auto-linked)
+  category text not null,
   amount numeric not null,
   expense_date date not null default current_date,
   created_at timestamptz default now()
 );
 
 -- ---------- NOTIFICATIONS (bonus: email/license reminders) ----------
-create table notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id uuid primary key default gen_random_uuid(),
   recipient_id uuid references profiles(id),
-  type text not null,          -- license_expiry, trip_dispatched, maintenance_due
+  type text not null,
   message text not null,
   is_read boolean default false,
   created_at timestamptz default now()
@@ -119,267 +139,285 @@ create table notifications (
 -- AUTO STATUS-CASCADE TRIGGERS (core business rules)
 -- ============================================================
 
--- 1. Dispatch trip -> vehicle & driver = On Trip
--- 2. Complete trip -> vehicle & driver = Available
--- 3. Cancel dispatched trip -> vehicle & driver = Available
-create or replace function fn_trip_status_cascade()
-returns trigger as $$
-begin
+-- 1. Trip status cascade: Dispatch/Complete/Cancel → vehicle & driver status
+DROP TRIGGER IF EXISTS trg_1_trip_status_cascade ON trips;
+CREATE OR REPLACE FUNCTION fn_trip_status_cascade()
+RETURNS trigger AS $$
+BEGIN
   -- Handle INSERT with status = 'Dispatched' (direct dispatch)
-  if TG_OP = 'INSERT' and NEW.status = 'Dispatched' then
-    update vehicles set status = 'On Trip', updated_at = now() where id = NEW.vehicle_id;
-    update drivers set status = 'On Trip', updated_at = now() where id = NEW.driver_id;
+  IF TG_OP = 'INSERT' AND NEW.status = 'Dispatched' THEN
+    UPDATE vehicles SET status = 'On Trip', updated_at = now() WHERE id = NEW.vehicle_id;
+    UPDATE drivers SET status = 'On Trip', updated_at = now() WHERE id = NEW.driver_id;
     NEW.dispatched_at = coalesce(NEW.dispatched_at, now());
 
-    insert into notifications (recipient_id, type, message)
-    select NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
-    where NEW.created_by is not null;
+    INSERT INTO notifications (recipient_id, type, message)
+    SELECT NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
+    WHERE NEW.created_by IS NOT NULL;
 
   -- Handle UPDATE transitions
-  elsif TG_OP = 'UPDATE' then
-    if NEW.status = 'Dispatched' and OLD.status = 'Draft' then
-      update vehicles set status = 'On Trip', updated_at = now() where id = NEW.vehicle_id;
-      update drivers set status = 'On Trip', updated_at = now() where id = NEW.driver_id;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NEW.status = 'Dispatched' AND OLD.status = 'Draft' THEN
+      UPDATE vehicles SET status = 'On Trip', updated_at = now() WHERE id = NEW.vehicle_id;
+      UPDATE drivers SET status = 'On Trip', updated_at = now() WHERE id = NEW.driver_id;
       NEW.dispatched_at = now();
 
-      insert into notifications (recipient_id, type, message)
-      select NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
-      where NEW.created_by is not null;
+      INSERT INTO notifications (recipient_id, type, message)
+      SELECT NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
+      WHERE NEW.created_by IS NOT NULL;
 
-    elsif NEW.status = 'Completed' and OLD.status = 'Dispatched' then
-      update vehicles set status = 'Available', odometer = coalesce(NEW.final_odometer, odometer), updated_at = now()
-        where id = NEW.vehicle_id;
-      update drivers set status = 'Available', updated_at = now() where id = NEW.driver_id;
+    ELSIF NEW.status = 'Completed' AND OLD.status = 'Dispatched' THEN
+      UPDATE vehicles SET status = 'Available', odometer = coalesce(NEW.final_odometer, odometer), updated_at = now()
+        WHERE id = NEW.vehicle_id;
+      UPDATE drivers SET status = 'Available', updated_at = now() WHERE id = NEW.driver_id;
       NEW.completed_at = now();
 
-    elsif NEW.status = 'Cancelled' and OLD.status = 'Dispatched' then
-      update vehicles set status = 'Available', updated_at = now() where id = NEW.vehicle_id;
-      update drivers set status = 'Available', updated_at = now() where id = NEW.driver_id;
+    ELSIF NEW.status = 'Cancelled' AND OLD.status = 'Dispatched' THEN
+      UPDATE vehicles SET status = 'Available', updated_at = now() WHERE id = NEW.vehicle_id;
+      UPDATE drivers SET status = 'Available', updated_at = now() WHERE id = NEW.driver_id;
       NEW.cancelled_at = now();
-    end if;
-  end if;
+    END IF;
+  END IF;
 
-  return NEW;
-end;
-$$ language plpgsql;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-create trigger trg_1_trip_status_cascade
-before insert or update on trips
-for each row
-execute function fn_trip_status_cascade();
+CREATE TRIGGER trg_1_trip_status_cascade
+BEFORE INSERT OR UPDATE ON trips
+FOR EACH ROW
+EXECUTE FUNCTION fn_trip_status_cascade();
 
--- 4. Validation before insert/update on trips: capacity, availability, license
-create or replace function fn_trip_validate()
-returns trigger as $$
-declare
+-- 2. Trip validation: capacity, availability, license
+DROP TRIGGER IF EXISTS trg_0_trip_validate ON trips;
+CREATE OR REPLACE FUNCTION fn_trip_validate()
+RETURNS trigger AS $$
+DECLARE
   v_status vehicle_status;
   v_capacity numeric;
   d_status driver_status;
   d_expiry date;
-begin
-  select status, max_load_capacity into v_status, v_capacity from vehicles where id = NEW.vehicle_id;
-  select status, license_expiry_date into d_status, d_expiry from drivers where id = NEW.driver_id;
+BEGIN
+  SELECT status, max_load_capacity INTO v_status, v_capacity FROM vehicles WHERE id = NEW.vehicle_id;
+  SELECT status, license_expiry_date INTO d_status, d_expiry FROM drivers WHERE id = NEW.driver_id;
 
-  if NEW.status = 'Dispatched' and (OLD is null or OLD.status = 'Draft') then
-    if v_status not in ('Available') then
-      raise exception 'Vehicle is not available for dispatch (current status: %)', v_status;
-    end if;
-    if d_status not in ('Available') then
-      raise exception 'Driver is not available for dispatch (current status: %)', d_status;
-    end if;
-    if d_expiry < current_date then
-      raise exception 'Driver license has expired';
-    end if;
-    if NEW.cargo_weight > v_capacity then
-      raise exception 'Cargo weight (%) exceeds vehicle max capacity (%)', NEW.cargo_weight, v_capacity;
-    end if;
-  end if;
+  IF NEW.status = 'Dispatched' AND (OLD IS NULL OR OLD.status = 'Draft') THEN
+    IF v_status NOT IN ('Available') THEN
+      RAISE EXCEPTION 'Vehicle is not available for dispatch (current status: %)', v_status;
+    END IF;
+    IF d_status NOT IN ('Available') THEN
+      RAISE EXCEPTION 'Driver is not available for dispatch (current status: %)', d_status;
+    END IF;
+    IF d_expiry < current_date THEN
+      RAISE EXCEPTION 'Driver license has expired';
+    END IF;
+    IF NEW.cargo_weight > v_capacity THEN
+      RAISE EXCEPTION 'Cargo weight (%) exceeds vehicle max capacity (%)', NEW.cargo_weight, v_capacity;
+    END IF;
+  END IF;
 
-  return NEW;
-end;
-$$ language plpgsql;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-create trigger trg_0_trip_validate
-before insert or update on trips
-for each row
-execute function fn_trip_validate();
+CREATE TRIGGER trg_0_trip_validate
+BEFORE INSERT OR UPDATE ON trips
+FOR EACH ROW
+EXECUTE FUNCTION fn_trip_validate();
 
--- 5. Maintenance: opening -> vehicle In Shop; closing -> vehicle Available (unless Retired)
-create or replace function fn_maintenance_status_cascade()
-returns trigger as $$
-begin
-  if TG_OP = 'INSERT' and NEW.status = 'In Shop' then
-    update vehicles set status = 'In Shop', updated_at = now() where id = NEW.vehicle_id;
-  elsif TG_OP = 'UPDATE' and NEW.status = 'Completed' and OLD.status = 'In Shop' then
+-- 3. Maintenance cascade: In Shop → vehicle status; Completed → vehicle Available + expense
+DROP TRIGGER IF EXISTS trg_maintenance_status_cascade ON maintenance_logs;
+CREATE OR REPLACE FUNCTION fn_maintenance_status_cascade()
+RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'INSERT' AND NEW.status = 'In Shop' THEN
+    UPDATE vehicles SET status = 'In Shop', updated_at = now() WHERE id = NEW.vehicle_id;
+  ELSIF TG_OP = 'UPDATE' AND NEW.status = 'Completed' AND OLD.status = 'In Shop' THEN
     NEW.closed_at = now();
-    update vehicles set status = 'Available', updated_at = now()
-      where id = NEW.vehicle_id and status <> 'Retired';
+    UPDATE vehicles SET status = 'Available', updated_at = now()
+      WHERE id = NEW.vehicle_id AND status <> 'Retired';
 
     -- auto-log maintenance cost as an expense
-    insert into expenses (vehicle_id, category, amount, expense_date)
-    values (NEW.vehicle_id, 'maintenance', NEW.cost, current_date);
-  end if;
-  return NEW;
-end;
-$$ language plpgsql;
+    INSERT INTO expenses (vehicle_id, category, amount, expense_date)
+    VALUES (NEW.vehicle_id, 'maintenance', NEW.cost, current_date);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-create trigger trg_maintenance_status_cascade
-before insert or update on maintenance_logs
-for each row
-execute function fn_maintenance_status_cascade();
+CREATE TRIGGER trg_maintenance_status_cascade
+BEFORE INSERT OR UPDATE ON maintenance_logs
+FOR EACH ROW
+EXECUTE FUNCTION fn_maintenance_status_cascade();
 
--- 6. Prevent registering duplicate active trip for a busy driver/vehicle at Draft stage (extra safety)
-create or replace function fn_prevent_double_active_trip()
-returns trigger as $$
-begin
-  if NEW.status = 'Dispatched' then
-    if exists (
-      select 1 from trips
-      where status = 'Dispatched'
-        and id <> NEW.id
-        and (vehicle_id = NEW.vehicle_id or driver_id = NEW.driver_id)
-    ) then
-      raise exception 'Vehicle or driver already has an active dispatched trip';
-    end if;
-  end if;
-  return NEW;
-end;
-$$ language plpgsql;
+-- 4. Prevent double-booking a vehicle or driver
+DROP TRIGGER IF EXISTS trg_prevent_double_active_trip ON trips;
+CREATE OR REPLACE FUNCTION fn_prevent_double_active_trip()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.status = 'Dispatched' THEN
+    IF EXISTS (
+      SELECT 1 FROM trips
+      WHERE status = 'Dispatched'
+        AND id <> NEW.id
+        AND (vehicle_id = NEW.vehicle_id OR driver_id = NEW.driver_id)
+    ) THEN
+      RAISE EXCEPTION 'Vehicle or driver already has an active dispatched trip';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-create trigger trg_prevent_double_active_trip
-before insert or update on trips
-for each row
-when (NEW.status = 'Dispatched')
-execute function fn_prevent_double_active_trip();
+CREATE TRIGGER trg_prevent_double_active_trip
+BEFORE INSERT OR UPDATE ON trips
+FOR EACH ROW
+WHEN (NEW.status = 'Dispatched')
+EXECUTE FUNCTION fn_prevent_double_active_trip();
 
 -- ============================================================
--- LICENSE EXPIRY REMINDER (bonus feature) — run via Supabase
--- scheduled Edge Function / pg_cron daily
+-- LICENSE EXPIRY REMINDER (bonus feature)
 -- ============================================================
-create or replace function fn_check_license_expiry()
-returns void as $$
-begin
-  insert into notifications (recipient_id, type, message)
-  select p.id, 'license_expiry',
+CREATE OR REPLACE FUNCTION fn_check_license_expiry()
+RETURNS void AS $$
+BEGIN
+  INSERT INTO notifications (recipient_id, type, message)
+  SELECT p.id, 'license_expiry',
          'License for driver ' || d.name || ' expires on ' || d.license_expiry_date
-  from drivers d
-  join profiles p on p.role = 'safety_officer'
-  where d.license_expiry_date <= current_date + interval '7 days'
-    and d.license_expiry_date >= current_date
-    and not exists (
-      select 1 from notifications n
-      where n.type = 'license_expiry'
-        and n.message like '%' || d.name || '%'
-        and n.created_at::date = current_date
+  FROM drivers d
+  JOIN profiles p ON p.role = 'safety_officer'
+  WHERE d.license_expiry_date <= current_date + interval '7 days'
+    AND d.license_expiry_date >= current_date
+    AND NOT EXISTS (
+      SELECT 1 FROM notifications n
+      WHERE n.type = 'license_expiry'
+        AND n.message LIKE '%' || d.name || '%'
+        AND n.created_at::date = current_date
     );
-end;
-$$ language plpgsql;
-
--- Schedule with pg_cron (enable extension in Supabase dashboard first):
--- select cron.schedule('license-expiry-check', '0 8 * * *', 'select fn_check_license_expiry();');
+END;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RBAC)
 -- ============================================================
-alter table profiles enable row level security;
-alter table vehicles enable row level security;
-alter table drivers enable row level security;
-alter table trips enable row level security;
-alter table maintenance_logs enable row level security;
-alter table fuel_logs enable row level security;
-alter table expenses enable row level security;
-alter table notifications enable row level security;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE drivers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maintenance_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fuel_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- helper: get current user's role
-create or replace function fn_current_role()
-returns user_role as $$
-  select role from profiles where id = auth.uid();
-$$ language sql stable;
+CREATE OR REPLACE FUNCTION fn_current_role()
+RETURNS user_role AS $$
+  SELECT role FROM profiles WHERE id = auth.uid();
+$$ LANGUAGE sql STABLE;
 
--- profiles: everyone can read all profiles (needed for dropdowns), only self can update own row
-create policy "profiles_select_all" on profiles for select using (true);
-create policy "profiles_update_self" on profiles for update using (auth.uid() = id);
+-- Drop existing policies first (idempotent)
+DROP POLICY IF EXISTS profiles_select_all ON profiles;
+DROP POLICY IF EXISTS profiles_update_self ON profiles;
+DROP POLICY IF EXISTS vehicles_select_all ON vehicles;
+DROP POLICY IF EXISTS vehicles_write_fleet_manager ON vehicles;
+DROP POLICY IF EXISTS vehicles_update_fleet_manager ON vehicles;
+DROP POLICY IF EXISTS drivers_select_all ON drivers;
+DROP POLICY IF EXISTS drivers_write ON drivers;
+DROP POLICY IF EXISTS drivers_update ON drivers;
+DROP POLICY IF EXISTS trips_select_all ON trips;
+DROP POLICY IF EXISTS trips_write ON trips;
+DROP POLICY IF EXISTS trips_update ON trips;
+DROP POLICY IF EXISTS maintenance_select_all ON maintenance_logs;
+DROP POLICY IF EXISTS maintenance_write ON maintenance_logs;
+DROP POLICY IF EXISTS maintenance_update ON maintenance_logs;
+DROP POLICY IF EXISTS fuel_select_all ON fuel_logs;
+DROP POLICY IF EXISTS fuel_write ON fuel_logs;
+DROP POLICY IF EXISTS expenses_select_all ON expenses;
+DROP POLICY IF EXISTS expenses_write ON expenses;
+DROP POLICY IF EXISTS notifications_select_own ON notifications;
+DROP POLICY IF EXISTS notifications_update_own ON notifications;
 
--- vehicles: all authenticated roles can read; only fleet_manager can write
-create policy "vehicles_select_all" on vehicles for select using (auth.role() = 'authenticated');
-create policy "vehicles_write_fleet_manager" on vehicles for insert with check (fn_current_role() = 'fleet_manager');
-create policy "vehicles_update_fleet_manager" on vehicles for update using (fn_current_role() = 'fleet_manager');
+-- profiles
+CREATE POLICY "profiles_select_all" ON profiles FOR SELECT USING (true);
+CREATE POLICY "profiles_update_self" ON profiles FOR UPDATE USING (auth.uid() = id);
 
--- drivers: all can read; fleet_manager + safety_officer can write
-create policy "drivers_select_all" on drivers for select using (auth.role() = 'authenticated');
-create policy "drivers_write" on drivers for insert with check (fn_current_role() in ('fleet_manager','safety_officer'));
-create policy "drivers_update" on drivers for update using (fn_current_role() in ('fleet_manager','safety_officer'));
+-- vehicles
+CREATE POLICY "vehicles_select_all" ON vehicles FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "vehicles_write_fleet_manager" ON vehicles FOR INSERT WITH CHECK (fn_current_role() = 'fleet_manager');
+CREATE POLICY "vehicles_update_fleet_manager" ON vehicles FOR UPDATE USING (fn_current_role() = 'fleet_manager');
 
--- trips: all can read; driver + fleet_manager can create/dispatch
-create policy "trips_select_all" on trips for select using (auth.role() = 'authenticated');
-create policy "trips_write" on trips for insert with check (fn_current_role() in ('driver','fleet_manager'));
-create policy "trips_update" on trips for update using (fn_current_role() in ('driver','fleet_manager'));
+-- drivers
+CREATE POLICY "drivers_select_all" ON drivers FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "drivers_write" ON drivers FOR INSERT WITH CHECK (fn_current_role() IN ('fleet_manager','safety_officer'));
+CREATE POLICY "drivers_update" ON drivers FOR UPDATE USING (fn_current_role() IN ('fleet_manager','safety_officer'));
 
--- maintenance: all can read; fleet_manager writes
-create policy "maintenance_select_all" on maintenance_logs for select using (auth.role() = 'authenticated');
-create policy "maintenance_write" on maintenance_logs for insert with check (fn_current_role() = 'fleet_manager');
-create policy "maintenance_update" on maintenance_logs for update using (fn_current_role() = 'fleet_manager');
+-- trips
+CREATE POLICY "trips_select_all" ON trips FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "trips_write" ON trips FOR INSERT WITH CHECK (fn_current_role() IN ('driver','fleet_manager'));
+CREATE POLICY "trips_update" ON trips FOR UPDATE USING (fn_current_role() IN ('driver','fleet_manager'));
 
--- fuel/expenses: all can read; fleet_manager + driver can write; financial_analyst read-only (implicit via select_all)
-create policy "fuel_select_all" on fuel_logs for select using (auth.role() = 'authenticated');
-create policy "fuel_write" on fuel_logs for insert with check (fn_current_role() in ('fleet_manager','driver'));
+-- maintenance
+CREATE POLICY "maintenance_select_all" ON maintenance_logs FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "maintenance_write" ON maintenance_logs FOR INSERT WITH CHECK (fn_current_role() = 'fleet_manager');
+CREATE POLICY "maintenance_update" ON maintenance_logs FOR UPDATE USING (fn_current_role() = 'fleet_manager');
 
-create policy "expenses_select_all" on expenses for select using (auth.role() = 'authenticated');
-create policy "expenses_write" on expenses for insert with check (fn_current_role() in ('fleet_manager','driver'));
+-- fuel/expenses
+CREATE POLICY "fuel_select_all" ON fuel_logs FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "fuel_write" ON fuel_logs FOR INSERT WITH CHECK (fn_current_role() IN ('fleet_manager','driver'));
 
--- notifications: user sees only their own
-create policy "notifications_select_own" on notifications for select using (auth.uid() = recipient_id);
-create policy "notifications_update_own" on notifications for update using (auth.uid() = recipient_id);
+CREATE POLICY "expenses_select_all" ON expenses FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "expenses_write" ON expenses FOR INSERT WITH CHECK (fn_current_role() IN ('fleet_manager','driver'));
+
+-- notifications
+CREATE POLICY "notifications_select_own" ON notifications FOR SELECT USING (auth.uid() = recipient_id);
+CREATE POLICY "notifications_update_own" ON notifications FOR UPDATE USING (auth.uid() = recipient_id);
 
 -- ============================================================
--- USEFUL VIEWS for Reports & Dashboard (saves frontend logic)
+-- VIEWS for Reports & Dashboard
 -- ============================================================
 
--- Dashboard KPIs
-create or replace view v_dashboard_kpis as
-select
-  (select count(*) from vehicles where status = 'Available') as vehicles_available,
-  (select count(*) from vehicles where status != 'Retired') as vehicles_active,
-  (select count(*) from vehicles where status = 'In Shop') as vehicles_in_maintenance,
-  (select count(*) from trips where status = 'Dispatched') as trips_active,
-  (select count(*) from trips where status = 'Draft') as trips_pending,
-  (select count(*) from drivers where status = 'On Trip') as drivers_on_duty,
+CREATE OR REPLACE VIEW v_dashboard_kpis AS
+SELECT
+  (SELECT count(*) FROM vehicles WHERE status = 'Available') AS vehicles_available,
+  (SELECT count(*) FROM vehicles WHERE status != 'Retired') AS vehicles_active,
+  (SELECT count(*) FROM vehicles WHERE status = 'In Shop') AS vehicles_in_maintenance,
+  (SELECT count(*) FROM trips WHERE status = 'Dispatched') AS trips_active,
+  (SELECT count(*) FROM trips WHERE status = 'Draft') AS trips_pending,
+  (SELECT count(*) FROM drivers WHERE status = 'On Trip') AS drivers_on_duty,
   round(
-    (select count(*)::numeric from vehicles where status = 'On Trip') /
-    nullif((select count(*)::numeric from vehicles where status != 'Retired'), 0) * 100, 1
-  ) as fleet_utilization_pct;
+    (SELECT count(*)::numeric FROM vehicles WHERE status = 'On Trip') /
+    nullif((SELECT count(*)::numeric FROM vehicles WHERE status != 'Retired'), 0) * 100, 1
+  ) AS fleet_utilization_pct;
 
--- Per-vehicle operational cost & efficiency (for Reports screen)
-create or replace view v_vehicle_report as
-select
-  v.id as vehicle_id,
+CREATE OR REPLACE VIEW v_vehicle_report AS
+SELECT
+  v.id AS vehicle_id,
   v.registration_number,
   v.name_model,
   v.acquisition_cost,
-  coalesce(sum(distinct m.cost), 0) as total_maintenance_cost,
-  coalesce(sum(distinct f.cost), 0) as total_fuel_cost,
-  coalesce(sum(distinct f.liters), 0) as total_fuel_liters,
-  coalesce(sum(distinct t.planned_distance) filter (where t.status = 'Completed'), 0) as total_distance,
-  coalesce(sum(distinct t.revenue) filter (where t.status = 'Completed'), 0) as total_revenue,
-  (coalesce(sum(distinct m.cost), 0) + coalesce(sum(distinct f.cost), 0)) as total_operational_cost,
-  case when coalesce(sum(distinct f.liters), 0) > 0
-    then round(coalesce(sum(distinct t.planned_distance) filter (where t.status = 'Completed'), 0) / sum(distinct f.liters), 2)
-    else 0
-  end as fuel_efficiency,
-  case when v.acquisition_cost > 0
-    then round(
-      (coalesce(sum(distinct t.revenue) filter (where t.status = 'Completed'), 0)
-       - (coalesce(sum(distinct m.cost), 0) + coalesce(sum(distinct f.cost), 0)))
+  coalesce(sum(DISTINCT m.cost), 0) AS total_maintenance_cost,
+  coalesce(sum(DISTINCT f.cost), 0) AS total_fuel_cost,
+  coalesce(sum(DISTINCT f.liters), 0) AS total_fuel_liters,
+  coalesce(sum(DISTINCT t.planned_distance) FILTER (WHERE t.status = 'Completed'), 0) AS total_distance,
+  coalesce(sum(DISTINCT t.revenue) FILTER (WHERE t.status = 'Completed'), 0) AS total_revenue,
+  (coalesce(sum(DISTINCT m.cost), 0) + coalesce(sum(DISTINCT f.cost), 0)) AS total_operational_cost,
+  CASE WHEN coalesce(sum(DISTINCT f.liters), 0) > 0
+    THEN round(coalesce(sum(DISTINCT t.planned_distance) FILTER (WHERE t.status = 'Completed'), 0) / sum(DISTINCT f.liters), 2)
+    ELSE 0
+  END AS fuel_efficiency,
+  CASE WHEN v.acquisition_cost > 0
+    THEN round(
+      (coalesce(sum(DISTINCT t.revenue) FILTER (WHERE t.status = 'Completed'), 0)
+       - (coalesce(sum(DISTINCT m.cost), 0) + coalesce(sum(DISTINCT f.cost), 0)))
       / v.acquisition_cost, 4)
-    else 0
-  end as roi
-from vehicles v
-left join maintenance_logs m on m.vehicle_id = v.id
-left join fuel_logs f on f.vehicle_id = v.id
-left join trips t on t.vehicle_id = v.id
-group by v.id;
+    ELSE 0
+  END AS roi
+FROM vehicles v
+LEFT JOIN maintenance_logs m ON m.vehicle_id = v.id
+LEFT JOIN fuel_logs f ON f.vehicle_id = v.id
+LEFT JOIN trips t ON t.vehicle_id = v.id
+GROUP BY v.id;
 
 -- ============================================================
 -- SEED: create your first fleet_manager after signup manually via:
--- update profiles set role = 'fleet_manager' where email = 'you@example.com';
+-- UPDATE profiles SET role = 'fleet_manager' WHERE email = 'you@example.com';
 -- ============================================================
