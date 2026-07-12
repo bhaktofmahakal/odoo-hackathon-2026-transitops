@@ -5,8 +5,9 @@ import type { Vehicle, VehicleStatus } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { canWrite } from '@/lib/permissions';
 import { toast } from 'sonner';
-import { FileUp, FileText, Loader2, X } from 'lucide-react';
+import { FileUp, FileText, Loader2, X, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/ui/status-badge';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
   const [region, setRegion] = useState('');
   const [status, setStatus] = useState<VehicleStatus>('Available');
   const [documentUrl, setDocumentUrl] = useState('');
+  const [maintenanceLogs, setMaintenanceLogs] = useState<any[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -52,6 +54,16 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
       setRegion(vehicle.region || '');
       setStatus(vehicle.status);
       setDocumentUrl(vehicle.document_url || '');
+
+      // Fetch maintenance history
+      supabase
+        .from('maintenance_logs')
+        .select('*')
+        .eq('vehicle_id', vehicle.id)
+        .order('opened_at', { ascending: false })
+        .then(({ data }) => {
+          if (data) setMaintenanceLogs(data);
+        });
     } else {
       setRegNumber('');
       setNameModel('');
@@ -62,6 +74,7 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
       setRegion('');
       setStatus('Available');
       setDocumentUrl('');
+      setMaintenanceLogs([]);
     }
     setErrors({});
   }, [vehicle, open]);
@@ -193,7 +206,7 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] md:max-w-[620px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{vehicle ? 'Edit Vehicle' : 'Register Vehicle'}</DialogTitle>
           <DialogDescription>
@@ -402,6 +415,38 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
               )}
             </div>
           </div>
+
+          {/* Maintenance History section (Only when editing an existing vehicle) */}
+          {vehicle && (
+            <div className="border-t pt-4 mt-4 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                <Wrench className="size-4 text-muted-foreground" />
+                Maintenance History
+              </h4>
+
+              {maintenanceLogs.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">No maintenance records logged for this vehicle.</p>
+              ) : (
+                <div className="max-h-[160px] overflow-y-auto border rounded-lg divide-y bg-muted/10">
+                  {maintenanceLogs.map((log) => (
+                    <div key={log.id} className="p-2.5 flex items-center justify-between text-xs hover:bg-muted/30 transition-colors">
+                      <div className="space-y-1 pr-3">
+                        <p className="font-medium text-foreground">{log.description}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Opened: {new Date(log.opened_at).toLocaleDateString()}
+                          {log.closed_at && ` · Closed: ${new Date(log.closed_at).toLocaleDateString()}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="font-semibold font-mono text-foreground">${log.cost}</span>
+                        <StatusBadge status={log.status} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <DialogFooter className="pt-2">
             <Button
