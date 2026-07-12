@@ -173,7 +173,7 @@ export default function MaintenancePage() {
       ) : (
         <>
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border bg-card overflow-hidden">
+          <div className="hidden md:block rounded-xl border bg-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">

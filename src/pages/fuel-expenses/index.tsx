@@ -183,7 +183,7 @@ export default function FuelExpensesPage() {
                 description="Refill logs mapped from completed trips or custom logs will be displayed here."
               />
             ) : (
-              <div className="rounded-xl border bg-card overflow-hidden">
+              <div className="rounded-xl border bg-card overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
@@ -225,7 +225,7 @@ export default function FuelExpensesPage() {
                 description="Tolls, miscellaneous items, and maintenance invoices are captured here."
               />
             ) : (
-              <div className="rounded-xl border bg-card overflow-hidden">
+              <div className="rounded-xl border bg-card overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
@@ -281,7 +281,7 @@ export default function FuelExpensesPage() {
                 description="Register vehicles and record operational activities to populate cost summaries."
               />
             ) : (
-              <div className="rounded-xl border bg-card overflow-hidden">
+              <div className="rounded-xl border bg-card overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
