@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 // Auth pages
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
+import ResetPasswordPage from "@/pages/auth/reset-password";
 
 // App pages
 import DashboardPage from "@/pages/dashboard";
@@ -28,6 +29,7 @@ export default function App() {
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* Protected routes — require auth */}
             <Route element={<ProtectedRoute />}>

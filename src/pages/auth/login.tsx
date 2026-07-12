@@ -10,7 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole | "">("");
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [resetLoading, setResetLoading] = useState(false);
+  const { signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e: FormEvent) {
@@ -27,6 +28,25 @@ export default function LoginPage() {
 
     toast.success("Welcome back!");
     navigate("/dashboard");
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      toast.error("Enter your email first", {
+        description: "Type your email in the field above, then click Forgot password?",
+      });
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await resetPassword(email);
+    setResetLoading(false);
+    if (error) {
+      toast.error("Reset failed", { description: error });
+    } else {
+      toast.success("Reset link sent!", {
+        description: `Check ${email} for the password reset link.`,
+      });
+    }
   }
 
   return (
@@ -158,12 +178,14 @@ export default function LoginPage() {
                 />
                 Remember me
               </label>
-              <a
-                href="#"
-                className="text-sm text-amber-500 hover:text-amber-400 font-medium"
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="text-sm text-amber-500 hover:text-amber-400 font-medium disabled:opacity-50"
               >
-                Forgot password?
-              </a>
+                {resetLoading ? "Sending…" : "Forgot password?"}
+              </button>
             </div>
 
             <button
