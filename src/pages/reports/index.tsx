@@ -445,13 +445,16 @@ export default function ReportsPage() {
                 <Calendar className="size-3" />
                 Start Date
               </label>
-              <input
-                id="filter-start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
+              <div className="relative flex items-center date-input-premium">
+                <input
+                  id="filter-start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-9 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <Calendar className="absolute right-3 top-2.5 size-4 text-muted-foreground pointer-events-none select-none" />
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -462,13 +465,16 @@ export default function ReportsPage() {
                 <Calendar className="size-3" />
                 End Date
               </label>
-              <input
-                id="filter-end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
+              <div className="relative flex items-center date-input-premium">
+                <input
+                  id="filter-end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-9 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <Calendar className="absolute right-3 top-2.5 size-4 text-muted-foreground pointer-events-none select-none" />
+              </div>
             </div>
 
             <div className="space-y-1">
