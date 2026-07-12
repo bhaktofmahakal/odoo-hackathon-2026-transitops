@@ -106,16 +106,9 @@ export function VehicleDialog({
     setUploading(false);
 
     if (error) {
-      // Storage upload fails often if bucket doesn't exist, we can fallback to standard mock URL
-      console.warn(
-        "Storage upload error, using local mock file reference:",
-        error,
-      );
-      // Let's use a mock link representing the document local name
-      setDocumentUrl(`file://mock-storage/${cleanReg}-${file.name}`);
-      toast.info(
-        "Local document reference saved successfully (Storage bucket bypassed)",
-      );
+      toast.error("Document upload failed", {
+        description: error,
+      });
       return;
     }
 

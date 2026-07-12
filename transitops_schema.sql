@@ -430,6 +430,11 @@ GRANT ALL ON fuel_logs TO service_role;
 GRANT ALL ON expenses TO service_role;
 GRANT ALL ON notifications TO service_role;
 
+GRANT SELECT ON v_vehicle_report TO authenticated;
+GRANT SELECT ON v_vehicle_report TO anon;
+GRANT SELECT ON v_dashboard_kpis TO authenticated;
+GRANT SELECT ON v_dashboard_kpis TO anon;
+
 -- ============================================================
 -- SEED: create your first fleet_manager after signup manually via:
 -- UPDATE profiles SET role = 'fleet_manager' WHERE email = 'you@example.com';
