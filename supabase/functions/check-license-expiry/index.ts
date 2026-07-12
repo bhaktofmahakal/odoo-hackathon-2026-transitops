@@ -3,8 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+// Note: SUPABASE_ prefix is reserved by Supabase, so we use SERVICE_ROLE_KEY
+const SERVICE_ROLE_KEY =
+  Deno.env.get("SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 serve(async (req) => {
   // Only allow POST requests for execution safety
@@ -18,16 +19,16 @@ serve(async (req) => {
   // Verify authorization key to secure the Edge Function
   const authHeader =
     req.headers.get("Authorization") || req.headers.get("apikey") || "";
-  console.log("SUPABASE_SERVICE_ROLE_KEY exists:", !!SUPABASE_SERVICE_ROLE_KEY);
+  console.log("SERVICE_ROLE_KEY exists:", !!SERVICE_ROLE_KEY);
   console.log(
     "authHeader:",
     authHeader ? authHeader.substring(0, 15) + "..." : "empty",
   );
 
   if (
-    SUPABASE_SERVICE_ROLE_KEY &&
-    authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` &&
-    authHeader !== SUPABASE_SERVICE_ROLE_KEY
+    SERVICE_ROLE_KEY &&
+    authHeader !== `Bearer ${SERVICE_ROLE_KEY}` &&
+    authHeader !== SERVICE_ROLE_KEY
   ) {
     console.error("Auth verification failed. Expected matching key.");
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -39,7 +40,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY,
+      SERVICE_ROLE_KEY,
     );
 
     // 1. Run the database trigger logic to generate in-app notifications

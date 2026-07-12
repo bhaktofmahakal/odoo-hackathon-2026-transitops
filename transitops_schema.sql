@@ -294,7 +294,7 @@ BEGIN
         AND n.created_at::date = current_date
     );
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RBAC)
@@ -367,8 +367,9 @@ CREATE POLICY "fuel_write" ON fuel_logs FOR INSERT WITH CHECK (fn_current_role()
 CREATE POLICY "expenses_select_all" ON expenses FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "expenses_write" ON expenses FOR INSERT WITH CHECK (fn_current_role() IN ('fleet_manager','driver'));
 
--- notifications
+-- notifications: user sees only their own; service role can insert
 CREATE POLICY "notifications_select_own" ON notifications FOR SELECT USING (auth.uid() = recipient_id);
+CREATE POLICY "notifications_insert_service" ON notifications FOR INSERT WITH CHECK (true);
 CREATE POLICY "notifications_update_own" ON notifications FOR UPDATE USING (auth.uid() = recipient_id);
 
 -- ============================================================
