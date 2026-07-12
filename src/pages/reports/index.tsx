@@ -42,23 +42,66 @@ export default function ReportsPage() {
 
   const fetchData = async () => {
     setLoading(true);
+
+    const fetchTableData = async (tableName: string) => {
+      let allData: any[] = [];
+      let from = 0;
+      const limit = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select('*')
+          .range(from, from + limit - 1);
+        if (error) {
+          throw new Error(`Failed to load ${tableName}: ${error.message}`);
+        }
+        if (!data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < limit) break;
+        from += limit;
+      }
+      return allData;
+    };
+
     try {
-      const [
-        { data: vehiclesData },
-        { data: tripsData },
-        { data: maintData },
-        { data: fuelData },
-      ] = await Promise.all([
-        supabase.from('vehicles').select('*'),
-        supabase.from('trips').select('*'),
-        supabase.from('maintenance_logs').select('*'),
-        supabase.from('fuel_logs').select('*'),
+      const results = await Promise.allSettled([
+        fetchTableData('vehicles'),
+        fetchTableData('trips'),
+        fetchTableData('maintenance_logs'),
+        fetchTableData('fuel_logs'),
       ]);
 
-      if (vehiclesData) setVehicles(vehiclesData as Vehicle[]);
-      if (tripsData) setTrips(tripsData as Trip[]);
-      if (maintData) setMaintenanceLogs(maintData as MaintenanceLog[]);
-      if (fuelData) setFuelLogs(fuelData as FuelLog[]);
+      const errors: string[] = [];
+
+      if (results[0].status === 'fulfilled') {
+        setVehicles(results[0].value as Vehicle[]);
+      } else {
+        errors.push(results[0].reason.message);
+      }
+
+      if (results[1].status === 'fulfilled') {
+        setTrips(results[1].value as Trip[]);
+      } else {
+        errors.push(results[1].reason.message);
+      }
+
+      if (results[2].status === 'fulfilled') {
+        setMaintenanceLogs(results[2].value as MaintenanceLog[]);
+      } else {
+        errors.push(results[2].reason.message);
+      }
+
+      if (results[3].status === 'fulfilled') {
+        setFuelLogs(results[3].value as FuelLog[]);
+      } else {
+        errors.push(results[3].reason.message);
+      }
+
+      if (errors.length > 0) {
+        toast.error('Some reporting data failed to load', {
+          description: errors.join('\n'),
+        });
+      }
     } catch (err: any) {
       toast.error('Failed to load reporting data', { description: err.message });
     } finally {
@@ -113,7 +156,7 @@ export default function ReportsPage() {
 
         const totalOperationalCost = totalFuelCost + totalMaintenanceCost;
         const fuelEfficiency = totalFuelLiters > 0 ? Number((totalDistance / totalFuelLiters).toFixed(2)) : 0;
-        
+
         const netProfit = totalRevenue - totalOperationalCost;
         const roi = v.acquisition_cost > 0 ? Number((netProfit / v.acquisition_cost).toFixed(5)) : 0;
 
@@ -205,16 +248,16 @@ export default function ReportsPage() {
     }
 
     const doc = new jsPDF();
-    
+
     // Header Banner
     doc.setFillColor(28, 25, 23); // sleek dark mode gray
     doc.rect(0, 0, 210, 40, 'F');
-    
+
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
     doc.text('TransitOps Smart Transport Operations', 14, 20);
-    
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(156, 163, 175);
@@ -248,13 +291,13 @@ export default function ReportsPage() {
     // Table mapping
     (doc as any).autoTable({
       head: [[
-        'Vehicle', 
-        'Type', 
-        'Distance', 
-        'Fuel Cost', 
-        'Maint. Cost', 
-        'Revenue', 
-        'Ops Cost', 
+        'Vehicle',
+        'Type',
+        'Distance',
+        'Fuel Cost',
+        'Maint. Cost',
+        'Revenue',
+        'Ops Cost',
         'ROI (%)'
       ]],
       body: computedReports.map((row) => [
