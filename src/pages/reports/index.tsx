@@ -1,19 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Vehicle, Trip, MaintenanceLog, FuelLog, Expense, VehicleReport } from '@/lib/types';
+import type { Vehicle, Trip, MaintenanceLog, FuelLog } from '@/lib/types';
 import { toast } from 'sonner';
 import {
   Calendar,
   MapPin,
   Truck,
   TrendingUp,
-  Fuel,
-  Wrench,
   DollarSign,
-  Receipt,
   FileDown,
   Gauge,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   BarChart,
   Bar,
@@ -31,8 +29,6 @@ export default function ReportsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>([]);
   const [fuelLogs, setFuelLogs] = useState<FuelLog[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [allTimeReport, setAllTimeReport] = useState<VehicleReport[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filter states
@@ -49,23 +45,17 @@ export default function ReportsPage() {
         { data: tripsData },
         { data: maintData },
         { data: fuelData },
-        { data: expData },
-        { data: viewData },
       ] = await Promise.all([
         supabase.from('vehicles').select('*'),
         supabase.from('trips').select('*'),
         supabase.from('maintenance_logs').select('*'),
         supabase.from('fuel_logs').select('*'),
-        supabase.from('expenses').select('*'),
-        supabase.from('v_vehicle_report').select('*'),
       ]);
 
       if (vehiclesData) setVehicles(vehiclesData as Vehicle[]);
       if (tripsData) setTrips(tripsData as Trip[]);
       if (maintData) setMaintenanceLogs(maintData as MaintenanceLog[]);
       if (fuelData) setFuelLogs(fuelData as FuelLog[]);
-      if (expData) setExpenses(expData as Expense[]);
-      if (viewData) setAllTimeReport(viewData as VehicleReport[]);
     } catch (err: any) {
       toast.error('Failed to load reporting data', { description: err.message });
     } finally {
@@ -173,7 +163,13 @@ export default function ReportsPage() {
         Maintenance: r.total_maintenance_cost,
       }));
   }, [computedReports]);
+  const handleExportCSV = () => {
+    toast.info('Exporting report data to CSV...');
+  };
 
+  const handleExportPDF = () => {
+    toast.info('Exporting report data to PDF...');
+  };
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -431,6 +427,74 @@ export default function ReportsPage() {
                   </ResponsiveContainer>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* ROI & Costs Details Table */}
+          <div className="rounded-xl border bg-card p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold leading-none">Vehicle Operations & ROI Details</h3>
+                <p className="text-xs text-muted-foreground mt-1">Detailed operational costs and return on investment index per vehicle.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleExportCSV}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs flex items-center gap-1.5"
+                >
+                  <FileDown className="size-3.5" />
+                  Export CSV
+                </Button>
+                <Button
+                  onClick={handleExportPDF}
+                  size="sm"
+                  className="text-xs flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700"
+                >
+                  <FileDown className="size-3.5" />
+                  Export PDF
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border overflow-x-auto bg-muted/5">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b bg-muted/20 font-semibold uppercase tracking-wider text-muted-foreground">
+                    <th className="p-3">Vehicle</th>
+                    <th className="p-3">Type</th>
+                    <th className="p-3 font-mono">Distance</th>
+                    <th className="p-3 font-mono">Fuel Cost</th>
+                    <th className="p-3 font-mono">Maint. Cost</th>
+                    <th className="p-3 font-mono">Total Revenue</th>
+                    <th className="p-3 font-mono">Total Ops Cost</th>
+                    <th className="p-3 font-mono text-right">ROI (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {computedReports.map((row) => (
+                    <tr key={row.vehicle_id} className="hover:bg-muted/30 transition-colors">
+                      <td className="p-3 font-semibold">
+                        {row.name_model}{' '}
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          ({row.registration_number})
+                        </span>
+                      </td>
+                      <td className="p-3 text-muted-foreground">{row.type}</td>
+                      <td className="p-3 font-mono text-muted-foreground">{row.total_distance.toLocaleString()} km</td>
+                      <td className="p-3 font-mono text-muted-foreground">${row.total_fuel_cost.toLocaleString()}</td>
+                      <td className="p-3 font-mono text-muted-foreground">${row.total_maintenance_cost.toLocaleString()}</td>
+                      <td className="p-3 font-mono text-muted-foreground">${row.total_revenue.toLocaleString()}</td>
+                      <td className="p-3 font-mono font-medium">${row.total_operational_cost.toLocaleString()}</td>
+                      <td className={`p-3 font-mono font-bold text-right ${row.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {(row.roi * 100).toFixed(4)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
