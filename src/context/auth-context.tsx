@@ -132,14 +132,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(
     async (email: string, password: string, fullName: string, role: UserRole) => {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName, role },
+          data: { full_name: fullName },
         },
       });
       if (error) return { error: error.message };
+
+      // Insert profile row manually (in case trigger doesn't exist yet)
+      if (data.user) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          full_name: fullName,
+          email: email,
+          role: role,
+        }, { onConflict: "id" });
+      }
+
       return { error: null };
     },
     [],
