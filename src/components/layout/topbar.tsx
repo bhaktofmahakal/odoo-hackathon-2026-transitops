@@ -2,11 +2,20 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/context/theme-context";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { Sun, Moon, LogOut, Bell, Check, Info } from "lucide-react";
+import { Sun, Moon, LogOut, Bell, Check, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import type { Notification } from "@/lib/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function Topbar() {
   const { profile, role, signOut } = useAuth();
@@ -15,6 +24,7 @@ export function Topbar() {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -223,12 +233,46 @@ export function Topbar() {
 
         {/* Sign out */}
         <button
-          onClick={handleSignOut}
+          onClick={() => setShowSignOutConfirm(true)}
           className="flex size-8 items-center justify-center rounded-md hover:bg-muted transition-colors"
           title="Sign out"
         >
           <LogOut className="size-4 text-muted-foreground" />
         </button>
+
+        {/* Sign-out Confirmation Dialog */}
+        <Dialog open={showSignOutConfirm} onOpenChange={setShowSignOutConfirm}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="size-5 text-amber-500" />
+                Confirm Sign Out
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to sign out? You will need to log in again
+                to access the platform.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setShowSignOutConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setShowSignOutConfirm(false);
+                  handleSignOut();
+                }}
+              >
+                <LogOut className="size-4 mr-2" />
+                Sign Out
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </header>
   );
