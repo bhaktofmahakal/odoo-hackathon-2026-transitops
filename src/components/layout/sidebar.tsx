@@ -42,7 +42,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <aside
-      className={cn("flex h-full w-56 flex-col border-r bg-card", className)}
+      className={cn("flex h-full w-56 shrink-0 flex-col border-r bg-card", className)}
     >
       {/* Branding */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b">

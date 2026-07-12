@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/context/theme-context";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { Sun, Moon, LogOut, Bell, Check, Info, AlertTriangle } from "lucide-react";
+import { Sun, Moon, LogOut, Bell, Check, Info, AlertTriangle, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export function Topbar() {
+export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { profile, role, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -101,14 +101,21 @@ export function Topbar() {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
-      {/* Search stub — matching mockup's search bar */}
-      <div className="flex items-center gap-4">
+    <header className="flex h-14 items-center justify-between border-b bg-card px-4 sm:px-6">
+      {/* Left side — hamburger (mobile) + search */}
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <button
+          onClick={onMenuToggle}
+          className="flex md:hidden size-8 items-center justify-center rounded-md hover:bg-muted transition-colors"
+          title="Open menu"
+        >
+          <Menu className="size-4 text-muted-foreground" />
+        </button>
         <input
           type="text"
           placeholder="Search..."
-          className="h-8 w-64 rounded-md border border-input bg-transparent px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          // TODO: Wire global search in a future phase
+          className="h-8 w-full max-w-[200px] sm:w-64 rounded-md border border-input bg-transparent px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 

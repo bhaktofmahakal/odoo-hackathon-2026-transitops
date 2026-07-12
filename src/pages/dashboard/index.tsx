@@ -97,17 +97,17 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <span className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">
           Filters
         </span>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-8 rounded-md border border-input bg-transparent px-3 text-sm"
+          className="h-8 rounded-md border border-input bg-transparent px-2 sm:px-3 text-xs sm:text-sm"
         >
-          <option value="all">Vehicle Type: All</option>
+          <option value="all">Type: All</option>
           {typesList.map((t) => (
             <option key={t} value={t}>{t}</option>
           ))}
@@ -115,7 +115,7 @@ export default function DashboardPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-8 rounded-md border border-input bg-transparent px-3 text-sm"
+          className="h-8 rounded-md border border-input bg-transparent px-2 sm:px-3 text-xs sm:text-sm"
         >
           <option value="all">Status: All</option>
           <option value="Available">Available</option>
@@ -126,7 +126,7 @@ export default function DashboardPage() {
         <select
           value={regionFilter}
           onChange={(e) => setRegionFilter(e.target.value)}
-          className="h-8 rounded-md border border-input bg-transparent px-3 text-sm"
+          className="h-8 rounded-md border border-input bg-transparent px-2 sm:px-3 text-xs sm:text-sm"
         >
           <option value="all">Region: All</option>
           {regionsList.map((r) => (

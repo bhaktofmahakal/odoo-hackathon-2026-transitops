@@ -48,7 +48,7 @@ export default function SettingsPage() {
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "User";
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Settings2 className="size-5 text-amber-500" />

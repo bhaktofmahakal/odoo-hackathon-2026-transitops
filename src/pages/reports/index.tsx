@@ -416,7 +416,7 @@ export default function ReportsPage() {
     toast.success("PDF Report exported successfully");
   };
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Reports & Fleet Analytics

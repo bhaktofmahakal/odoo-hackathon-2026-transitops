@@ -112,7 +112,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm space-y-6 relative">
           {/* Error state annotation */}
           {error && (
-            <div className="absolute -right-4 top-0 w-48 rounded-lg border-2 border-dashed border-red-500/50 bg-red-500/5 p-3 text-xs text-red-500">
+            <div className="hidden sm:block absolute -right-4 top-0 w-48 rounded-lg border-2 border-dashed border-red-500/50 bg-red-500/5 p-3 text-xs text-red-500">
               <p className="font-semibold mb-1">Error state</p>
               <p>✕ {error}</p>
               <p className="text-[10px] text-red-400 mt-1">Account locked after 5 failed attempts</p>
