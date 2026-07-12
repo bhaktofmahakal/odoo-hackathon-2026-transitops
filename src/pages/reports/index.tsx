@@ -322,6 +322,55 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+
+          {/* Fuel Efficiency Chart */}
+          <div className="grid grid-cols-1 gap-6">
+            <div className="rounded-xl border bg-card p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold leading-none">Fuel Efficiency Ranking</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Average kilometers traveled per liter of fuel (higher is better).</p>
+                </div>
+              </div>
+
+              {fuelEfficiencyData.length === 0 ? (
+                <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-muted/10 text-xs text-muted-foreground">
+                  No fuel refill data available for the selected range.
+                </div>
+              ) : (
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={fuelEfficiencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="name" fontSize={11} stroke="#888888" tickLine={false} />
+                      <YAxis fontSize={11} stroke="#888888" unit=" km/L" tickLine={false} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="rounded-lg border bg-background p-2.5 shadow-md text-xs space-y-1">
+                                <p className="font-semibold">{payload[0].payload.fullName}</p>
+                                <p className="text-amber-500 font-mono">
+                                  Efficiency: <span className="font-bold">{payload[0].value}</span> km/L
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="efficiency" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                        {fuelEfficiencyData.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#f59e0b'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
