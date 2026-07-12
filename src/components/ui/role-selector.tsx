@@ -10,46 +10,40 @@ import {
 interface RoleOption {
   value: UserRole | "";
   label: string;
-  description: string;
   icon: typeof Truck;
-  color: string;
+  activeColor: string;
 }
 
 const ROLES: RoleOption[] = [
   {
     value: "",
-    label: "Use my assigned role",
-    description: "Sign in with the role already assigned to your account",
+    label: "Assigned",
     icon: ShieldCheck,
-    color: "border-muted text-muted-foreground",
+    activeColor: "bg-muted text-muted-foreground border-muted-foreground/30",
   },
   {
     value: "fleet_manager",
-    label: "Fleet Manager",
-    description: "Full access to vehicles, trips, maintenance, and settings",
+    label: "Manager",
     icon: Truck,
-    color: "border-amber-500/40 bg-amber-500/5 text-amber-500",
+    activeColor: "bg-amber-500/15 text-amber-500 border-amber-500/40",
   },
   {
     value: "driver",
     label: "Dispatcher",
-    description: "Dashboard, trip management, and fuel logging",
     icon: ShieldAlert,
-    color: "border-blue-500/40 bg-blue-500/5 text-blue-500",
+    activeColor: "bg-blue-500/15 text-blue-500 border-blue-500/40",
   },
   {
     value: "safety_officer",
-    label: "Safety Officer",
-    description: "Driver compliance, safety metrics, and license tracking",
+    label: "Safety",
     icon: ShieldCheck,
-    color: "border-emerald-500/40 bg-emerald-500/5 text-emerald-500",
+    activeColor: "bg-emerald-500/15 text-emerald-500 border-emerald-500/40",
   },
   {
     value: "financial_analyst",
-    label: "Financial Analyst",
-    description: "Fuel expenses, cost reports, and analytics dashboard",
+    label: "Finance",
     icon: BarChart3,
-    color: "border-purple-500/40 bg-purple-500/5 text-purple-500",
+    activeColor: "bg-purple-500/15 text-purple-500 border-purple-500/40",
   },
 ];
 
@@ -65,7 +59,7 @@ export function RoleSelector({ value, onChange, required }: RoleSelectorProps) {
       <label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
         Workspace Role {required && <span className="text-destructive">*</span>}
       </label>
-      <div className="grid grid-cols-1 gap-2">
+      <div className="flex flex-wrap gap-2">
         {ROLES.map((role) => {
           const isSelected = value === role.value;
           return (
@@ -74,20 +68,14 @@ export function RoleSelector({ value, onChange, required }: RoleSelectorProps) {
               type="button"
               onClick={() => onChange(role.value)}
               className={cn(
-                "flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all",
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
                 isSelected
-                  ? `${role.color} ring-1 ring-current/20`
-                  : "border-border hover:border-muted-foreground/30 hover:bg-muted/30",
+                  ? role.activeColor
+                  : "border-border text-muted-foreground hover:border-muted-foreground/30 hover:bg-muted/30",
               )}
             >
-              <role.icon className="size-5 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">{role.label}</p>
-                <p className="text-xs text-muted-foreground">{role.description}</p>
-              </div>
-              {isSelected && (
-                <div className="size-2.5 rounded-full bg-current shrink-0" />
-              )}
+              <role.icon className="size-3.5" />
+              {role.label}
             </button>
           );
         })}
