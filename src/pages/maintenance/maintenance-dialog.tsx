@@ -177,17 +177,22 @@ export function MaintenanceDialog({
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Cost ($) *
+              Cost *
             </label>
-            <input
-              type="number"
-              placeholder="e.g. 250"
-              value={cost}
-              onChange={(e) => setCost(e.target.value)}
-              className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                errors.cost ? "border-destructive" : "border-input"
-              }`}
-            />
+            <div className="relative flex items-center">
+              <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                $
+              </span>
+              <input
+                type="number"
+                placeholder="e.g. 250"
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+                className={`flex h-9 w-full rounded-md border bg-transparent pl-6 pr-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                  errors.cost ? "border-destructive" : "border-input"
+                }`}
+              />
+            </div>
             {errors.cost && (
               <p className="text-xs text-destructive">{errors.cost}</p>
             )}
