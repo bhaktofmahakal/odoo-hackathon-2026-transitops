@@ -2,6 +2,18 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Vehicle, Trip, MaintenanceLog, FuelLog, Expense, VehicleReport } from '@/lib/types';
 import { toast } from 'sonner';
+import {
+  Calendar,
+  MapPin,
+  Truck,
+  TrendingUp,
+  Fuel,
+  Wrench,
+  DollarSign,
+  Receipt,
+  FileDown,
+  Gauge,
+} from 'lucide-react';
 
 export default function ReportsPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -143,7 +155,152 @@ export default function ReportsPage() {
           <p className="text-sm text-muted-foreground">Loading analytics dashboard...</p>
         </div>
       ) : (
-        <div className="text-xs text-muted-foreground">Data loaded successfully.</div>
+        <div className="space-y-6">
+          {/* Filters Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-card border rounded-xl p-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                <Calendar className="size-3" />
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                <Calendar className="size-3" />
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                <Truck className="size-3" />
+                Vehicle Type
+              </label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="all">All Types</option>
+                {typesList.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                <MapPin className="size-3" />
+                Region
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="all">All Regions</option>
+                  <option value="empty">Unassigned</option>
+                  {regionsList.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+
+                {(startDate || endDate || selectedType !== 'all' || selectedRegion !== 'all') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                      setSelectedType('all');
+                      setSelectedRegion('all');
+                    }}
+                    className="text-xs text-amber-500 hover:text-amber-400"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* KPI Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="rounded-xl border bg-card p-4 flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                <Truck className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Fleet</p>
+                <p className="text-xl font-bold font-mono">
+                  {vehicles.filter((v) => v.status !== 'Retired').length}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-4 flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500">
+                <Gauge className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fleet Utilization</p>
+                <p className="text-xl font-bold font-mono">
+                  {(() => {
+                    const active = vehicles.filter((v) => v.status !== 'Retired').length;
+                    const busy = vehicles.filter((v) => v.status === 'On Trip').length;
+                    return active > 0 ? ((busy / active) * 100).toFixed(1) : '0.0';
+                  })()}%
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-4 flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                <DollarSign className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Ops Cost</p>
+                <p className="text-xl font-bold font-mono">
+                  ${computedReports.reduce((sum, r) => sum + r.total_operational_cost, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-4 flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                <TrendingUp className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Avg ROI Index</p>
+                <p className="text-xl font-bold font-mono">
+                  {(() => {
+                    const valid = computedReports.filter((r) => r.acquisition_cost > 0);
+                    const avg = valid.length > 0 ? valid.reduce((sum, r) => sum + r.roi, 0) / valid.length : 0;
+                    return (avg * 100).toFixed(4);
+                  })()}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
