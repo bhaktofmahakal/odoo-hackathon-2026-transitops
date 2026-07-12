@@ -30,11 +30,15 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-zinc-900 p-10">
-        <div>
+      <div 
+        className="hidden lg:flex lg:w-[45%] flex-col justify-between p-10 bg-cover bg-center relative"
+        style={{ backgroundImage: `url('/login-banner.png')` }}
+      >
+        <div className="absolute inset-0 bg-black/75 z-0" />
+        <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-amber-600">
-              <Truck className="size-5 text-white" />
+            <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
+              <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">TransitOps</h1>
@@ -43,7 +47,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="relative z-10 space-y-4">
           <p className="text-sm font-medium text-zinc-300">One login, four roles:</p>
           <ul className="space-y-2 text-sm text-zinc-400">
             <li className="flex items-center gap-2">
@@ -65,7 +69,7 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        <p className="text-xs text-zinc-600">TRANSITOPS © 2026 · RBAC ENF.</p>
+        <p className="relative z-10 text-xs text-zinc-500">TRANSITOPS © 2026 · RBAC ENF.</p>
       </div>
 
       {/* Right panel — sign in form */}
@@ -73,8 +77,8 @@ export default function LoginPage() {
         <div className="w-full max-w-sm space-y-6">
           {/* Mobile branding */}
           <div className="flex items-center gap-3 mb-4 lg:hidden">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-amber-600">
-              <Truck className="size-5 text-white" />
+            <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
+              <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
             </div>
             <h1 className="text-xl font-bold">TransitOps</h1>
           </div>

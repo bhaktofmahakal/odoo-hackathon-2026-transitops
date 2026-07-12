@@ -42,8 +42,8 @@ export function Sidebar({ className }: SidebarProps) {
     >
       {/* Branding */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-amber-600">
-          <Truck className="size-4 text-white" />
+        <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
+          <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
         </div>
         <span className="text-base font-bold tracking-tight">TransitOps</span>
       </div>
