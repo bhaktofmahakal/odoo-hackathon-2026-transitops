@@ -9,7 +9,7 @@ create type user_role as enum ('fleet_manager', 'driver', 'safety_officer', 'fin
 create type vehicle_status as enum ('Available', 'On Trip', 'In Shop', 'Retired');
 create type driver_status as enum ('Available', 'On Trip', 'Off Duty', 'Suspended');
 create type trip_status as enum ('Draft', 'Dispatched', 'Completed', 'Cancelled');
-create type maintenance_status as enum ('Active', 'Closed');
+create type maintenance_status as enum ('In Shop', 'Completed');
 
 -- ---------- PROFILES (extends auth.users) ----------
 create table profiles (
@@ -125,25 +125,38 @@ create table notifications (
 create or replace function fn_trip_status_cascade()
 returns trigger as $$
 begin
-  if NEW.status = 'Dispatched' and OLD.status = 'Draft' then
+  -- Handle INSERT with status = 'Dispatched' (direct dispatch)
+  if TG_OP = 'INSERT' and NEW.status = 'Dispatched' then
     update vehicles set status = 'On Trip', updated_at = now() where id = NEW.vehicle_id;
     update drivers set status = 'On Trip', updated_at = now() where id = NEW.driver_id;
-    NEW.dispatched_at = now();
+    NEW.dispatched_at = coalesce(NEW.dispatched_at, now());
 
     insert into notifications (recipient_id, type, message)
     select NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
     where NEW.created_by is not null;
 
-  elsif NEW.status = 'Completed' and OLD.status = 'Dispatched' then
-    update vehicles set status = 'Available', odometer = coalesce(NEW.final_odometer, odometer), updated_at = now()
-      where id = NEW.vehicle_id;
-    update drivers set status = 'Available', updated_at = now() where id = NEW.driver_id;
-    NEW.completed_at = now();
+  -- Handle UPDATE transitions
+  elsif TG_OP = 'UPDATE' then
+    if NEW.status = 'Dispatched' and OLD.status = 'Draft' then
+      update vehicles set status = 'On Trip', updated_at = now() where id = NEW.vehicle_id;
+      update drivers set status = 'On Trip', updated_at = now() where id = NEW.driver_id;
+      NEW.dispatched_at = now();
 
-  elsif NEW.status = 'Cancelled' and OLD.status = 'Dispatched' then
-    update vehicles set status = 'Available', updated_at = now() where id = NEW.vehicle_id;
-    update drivers set status = 'Available', updated_at = now() where id = NEW.driver_id;
-    NEW.cancelled_at = now();
+      insert into notifications (recipient_id, type, message)
+      select NEW.created_by, 'trip_dispatched', 'Trip dispatched: ' || NEW.source || ' -> ' || NEW.destination
+      where NEW.created_by is not null;
+
+    elsif NEW.status = 'Completed' and OLD.status = 'Dispatched' then
+      update vehicles set status = 'Available', odometer = coalesce(NEW.final_odometer, odometer), updated_at = now()
+        where id = NEW.vehicle_id;
+      update drivers set status = 'Available', updated_at = now() where id = NEW.driver_id;
+      NEW.completed_at = now();
+
+    elsif NEW.status = 'Cancelled' and OLD.status = 'Dispatched' then
+      update vehicles set status = 'Available', updated_at = now() where id = NEW.vehicle_id;
+      update drivers set status = 'Available', updated_at = now() where id = NEW.driver_id;
+      NEW.cancelled_at = now();
+    end if;
   end if;
 
   return NEW;
@@ -151,9 +164,8 @@ end;
 $$ language plpgsql;
 
 create trigger trg_1_trip_status_cascade
-before update on trips
+before insert or update on trips
 for each row
-when (NEW.status is distinct from OLD.status)
 execute function fn_trip_status_cascade();
 
 -- 4. Validation before insert/update on trips: capacity, availability, license
@@ -196,9 +208,9 @@ execute function fn_trip_validate();
 create or replace function fn_maintenance_status_cascade()
 returns trigger as $$
 begin
-  if TG_OP = 'INSERT' and NEW.status = 'Active' then
+  if TG_OP = 'INSERT' and NEW.status = 'In Shop' then
     update vehicles set status = 'In Shop', updated_at = now() where id = NEW.vehicle_id;
-  elsif TG_OP = 'UPDATE' and NEW.status = 'Closed' and OLD.status = 'Active' then
+  elsif TG_OP = 'UPDATE' and NEW.status = 'Completed' and OLD.status = 'In Shop' then
     NEW.closed_at = now();
     update vehicles set status = 'Available', updated_at = now()
       where id = NEW.vehicle_id and status <> 'Retired';
@@ -235,7 +247,7 @@ end;
 $$ language plpgsql;
 
 create trigger trg_prevent_double_active_trip
-before update on trips
+before insert or update on trips
 for each row
 when (NEW.status = 'Dispatched')
 execute function fn_prevent_double_active_trip();
