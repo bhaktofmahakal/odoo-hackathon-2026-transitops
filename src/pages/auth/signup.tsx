@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
+import type { UserRole } from "@/lib/types";
 import { toast } from "sonner";
+import { RoleSelector } from "@/components/ui/role-selector";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("driver");
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -15,7 +18,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, role);
 
     if (error) {
       toast.error("Sign up failed", { description: error });
@@ -24,7 +27,7 @@ export default function SignupPage() {
     }
 
     toast.success("Account created!", {
-      description: "Please check your email to verify, then sign in.",
+      description: "Your profile and selected role are ready. You can now sign in.",
     });
     navigate("/login");
   }
@@ -149,6 +152,12 @@ export default function SignupPage() {
                 className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
+
+            <RoleSelector
+              value={role}
+              onChange={(r) => setRole(r || "driver")}
+              required
+            />
 
             <button
               type="submit"

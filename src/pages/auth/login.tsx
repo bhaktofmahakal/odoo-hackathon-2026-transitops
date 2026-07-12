@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
+import type { UserRole } from "@/lib/types";
 import { toast } from "sonner";
+import { RoleSelector } from "@/components/ui/role-selector";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole | "">("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -14,7 +17,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password, role || undefined);
 
     if (error) {
       toast.error("Sign in failed", { description: error });
@@ -142,6 +145,11 @@ export default function LoginPage() {
               />
             </div>
 
+            <RoleSelector
+              value={role}
+              onChange={(r) => setRole(r)}
+            />
+
             <button
               type="submit"
               disabled={loading}
@@ -153,7 +161,7 @@ export default function LoginPage() {
 
           <div className="space-y-3 border-t pt-4">
             <p className="text-xs text-muted-foreground font-medium">
-              Access is scoped by role after login:
+              Access is scoped by your assigned role:
             </p>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Fleet Manager → Fleet, Maintenance</li>
