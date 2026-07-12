@@ -80,7 +80,7 @@ select cron.schedule(
     'https://[your-project-ref].supabase.co/functions/v1/check-license-expiry',
     '{}',
     '{}',
-    '{"Content-Type": "application/json"}'
+    '{"Content-Type": "application/json", "Authorization": "Bearer [your-service-role-key]"}'
   );
   $$
 );
