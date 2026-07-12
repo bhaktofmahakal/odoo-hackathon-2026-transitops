@@ -51,6 +51,7 @@ export default function ReportsPage() {
         const { data, error } = await supabase
           .from(tableName)
           .select('*')
+          .order('id')
           .range(from, from + limit - 1);
         if (error) {
           throw new Error(`Failed to load ${tableName}: ${error.message}`);
