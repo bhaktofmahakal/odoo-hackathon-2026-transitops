@@ -253,10 +253,11 @@ export function Topbar() {
                 to access the platform.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="gap-3 sm:gap-3 pt-2">
               <Button
                 variant="outline"
                 onClick={() => setShowSignOutConfirm(false)}
+                className="flex-1 sm:flex-none h-10"
               >
                 Cancel
               </Button>
@@ -266,6 +267,7 @@ export function Topbar() {
                   setShowSignOutConfirm(false);
                   handleSignOut();
                 }}
+                className="flex-1 sm:flex-none h-10"
               >
                 <LogOut className="size-4 mr-2" />
                 Sign Out

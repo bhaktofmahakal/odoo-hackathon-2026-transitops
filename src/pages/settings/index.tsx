@@ -3,7 +3,6 @@ import { useAuth } from "@/context/auth-context";
 import { ROLE_LABELS } from "@/lib/permissions";
 import {
   User,
-  Mail,
   MapPin,
   Shield,
   Bell,
@@ -12,12 +11,28 @@ import {
   CalendarCheck,
   Wrench,
   Fuel,
+  Settings2,
 } from "lucide-react";
+
+const ROLE_COLORS: Record<string, string> = {
+  fleet_manager: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+  driver: "bg-blue-500/15 text-blue-500 border-blue-500/30",
+  safety_officer: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+  financial_analyst: "bg-purple-500/15 text-purple-500 border-purple-500/30",
+};
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default function SettingsPage() {
   const { profile, role, user } = useAuth();
 
-  // Notification preference toggles (local-only for now)
   const [notifPrefs, setNotifPrefs] = useState({
     tripUpdates: true,
     maintenanceAlerts: true,
@@ -30,69 +45,70 @@ export default function SettingsPage() {
   }
 
   const email = profile?.email ?? user?.email ?? "—";
+  const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "User";
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="p-6 md:p-8 space-y-8 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Settings2 className="size-5 text-amber-500" />
+          Settings
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage your profile and notification preferences.
         </p>
       </div>
 
       {/* Profile Card */}
-      <div className="rounded-xl border bg-card">
-        <div className="border-b px-6 py-4">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <User className="size-4 text-amber-500" />
-            User Profile
-          </h2>
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="bg-gradient-to-r from-amber-600/10 to-transparent px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-500 font-bold text-xl">
+            {getInitials(displayName)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-semibold truncate">{displayName}</p>
+            <p className="text-sm text-muted-foreground truncate">{email}</p>
+          </div>
+          {role && (
+            <span
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                ROLE_COLORS[role] ?? "bg-muted text-muted-foreground"
+              }`}
+            >
+              <Shield className="size-3.5" />
+              {ROLE_LABELS[role]}
+            </span>
+          )}
         </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Full Name */}
-          <div className="space-y-1.5">
+
+        <div className="px-6 py-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <User className="size-3" />
               Full Name
             </label>
-            <div className="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
               {profile?.full_name ?? "—"}
             </div>
           </div>
 
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Mail className="size-3" />
-              Email Address
-            </label>
-            <div className="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
-              {email}
-            </div>
-          </div>
-
-          {/* Region */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <MapPin className="size-3" />
               Region
             </label>
-            <div className="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
               {profile?.region ?? "All Regions"}
             </div>
           </div>
 
-          {/* Role */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <Shield className="size-3" />
-              Role
+              Workspace Access
             </label>
-            <div className="flex h-9 items-center gap-2 rounded-md border border-input bg-muted/30 px-3 text-sm">
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-500">
-                {role ? ROLE_LABELS[role] : "—"}
-              </span>
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 text-sm text-muted-foreground">
+              Determined by role
             </div>
           </div>
         </div>
@@ -100,14 +116,16 @@ export default function SettingsPage() {
 
       {/* Notification Preferences */}
       <div className="rounded-xl border bg-card">
-        <div className="border-b px-6 py-4">
+        <div className="border-b px-6 py-5 flex items-center justify-between">
           <h2 className="text-base font-semibold flex items-center gap-2">
             <Bell className="size-4 text-amber-500" />
             Notification Preferences
           </h2>
+          <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium">
+            Local only
+          </span>
         </div>
-        <div className="p-6 space-y-4">
-          {/* Trip Updates */}
+        <div className="p-2 space-y-1">
           <NotifToggle
             icon={Clock}
             label="Trip Status Updates"
@@ -115,8 +133,6 @@ export default function SettingsPage() {
             enabled={notifPrefs.tripUpdates}
             onToggle={() => togglePref("tripUpdates")}
           />
-
-          {/* Maintenance Alerts */}
           <NotifToggle
             icon={Wrench}
             label="Maintenance Alerts"
@@ -124,8 +140,6 @@ export default function SettingsPage() {
             enabled={notifPrefs.maintenanceAlerts}
             onToggle={() => togglePref("maintenanceAlerts")}
           />
-
-          {/* Fuel Alerts */}
           <NotifToggle
             icon={Fuel}
             label="Fuel & Expense Alerts"
@@ -133,8 +147,6 @@ export default function SettingsPage() {
             enabled={notifPrefs.fuelAlerts}
             onToggle={() => togglePref("fuelAlerts")}
           />
-
-          {/* License Expiry */}
           <NotifToggle
             icon={CalendarCheck}
             label="License Expiry Reminders"
