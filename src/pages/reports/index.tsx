@@ -114,6 +114,17 @@ export default function ReportsPage() {
   }, []);
 
   const computedReports = useMemo(() => {
+    // Normalizes input timestamp or date string into a local YYYY-MM-DD date string
+    const getLocalDateStr = (val: string) => {
+      if (!val) return '';
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
     return vehicles
       .filter((v) => {
         const matchesType = selectedType === 'all' || v.type === selectedType;
@@ -127,24 +138,27 @@ export default function ReportsPage() {
         // Filter trips for this vehicle within date range
         const vehicleTrips = trips.filter((t) => {
           if (t.vehicle_id !== v.id || t.status !== 'Completed') return false;
-          if (startDate && new Date(t.completed_at || t.created_at) < new Date(startDate)) return false;
-          if (endDate && new Date(t.completed_at || t.created_at) > new Date(endDate + 'T23:59:59')) return false;
+          const tDate = getLocalDateStr(t.completed_at || t.created_at);
+          if (startDate && tDate < startDate) return false;
+          if (endDate && tDate > endDate) return false;
           return true;
         });
 
         // Filter fuel logs for this vehicle within date range
         const vehicleFuel = fuelLogs.filter((f) => {
           if (f.vehicle_id !== v.id) return false;
-          if (startDate && new Date(f.log_date) < new Date(startDate)) return false;
-          if (endDate && new Date(f.log_date) > new Date(endDate)) return false;
+          const fDate = f.log_date; // already YYYY-MM-DD format
+          if (startDate && fDate < startDate) return false;
+          if (endDate && fDate > endDate) return false;
           return true;
         });
 
         // Filter maintenance logs for this vehicle within date range
         const vehicleMaint = maintenanceLogs.filter((m) => {
           if (m.vehicle_id !== v.id) return false;
-          if (startDate && new Date(m.opened_at) < new Date(startDate)) return false;
-          if (endDate && new Date(m.opened_at) > new Date(endDate + 'T23:59:59')) return false;
+          const mDate = getLocalDateStr(m.opened_at);
+          if (startDate && mDate < startDate) return false;
+          if (endDate && mDate > endDate) return false;
           return true;
         });
 
@@ -166,6 +180,7 @@ export default function ReportsPage() {
           name_model: v.name_model,
           type: v.type,
           region: v.region,
+          status: v.status,
           acquisition_cost: Number(v.acquisition_cost),
           total_distance: totalDistance,
           total_fuel_cost: totalFuelCost,
