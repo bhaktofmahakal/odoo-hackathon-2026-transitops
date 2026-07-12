@@ -334,8 +334,9 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Fuel Efficiency Chart */}
-          <div className="grid grid-cols-1 gap-6">
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Fuel Efficiency Chart */}
             <div className="rounded-xl border bg-card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -376,6 +377,56 @@ export default function ReportsPage() {
                           <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#f59e0b'} />
                         ))}
                       </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
+            {/* Operational Cost Structure Chart */}
+            <div className="rounded-xl border bg-card p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold leading-none">Operational Cost Structure</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Cost breakdown between Fuel and Maintenance (lower is better).</p>
+                </div>
+              </div>
+
+              {operationalCostData.length === 0 ? (
+                <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-muted/10 text-xs text-muted-foreground">
+                  No operational cost data logged for the selected range.
+                </div>
+              ) : (
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={operationalCostData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="name" fontSize={11} stroke="#888888" tickLine={false} />
+                      <YAxis fontSize={11} stroke="#888888" unit=" $" tickLine={false} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const fuel = payload[0].value;
+                            const maint = payload[1].value;
+                            const total = Number(fuel) + Number(maint);
+                            return (
+                              <div className="rounded-lg border bg-background p-2.5 shadow-md text-xs space-y-1">
+                                <p className="font-semibold">{payload[0].payload.fullName}</p>
+                                <p className="text-blue-400">Fuel: ${fuel}</p>
+                                <p className="text-orange-400">Maint: ${maint}</p>
+                                <div className="border-t pt-1 mt-1 font-bold text-foreground">
+                                  Total: ${total}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                      <Bar dataKey="Fuel" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="Maintenance" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
