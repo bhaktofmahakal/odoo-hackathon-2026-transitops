@@ -8,7 +8,8 @@ export type NavItem =
   | "trips"
   | "maintenance"
   | "fuel-expenses"
-  | "reports";
+  | "reports"
+  | "settings";
 
 // Which nav items each role can see — derived from PRD Section 2 + schema RLS
 const ROLE_NAV_MAP: Record<UserRole, NavItem[]> = {
@@ -20,10 +21,11 @@ const ROLE_NAV_MAP: Record<UserRole, NavItem[]> = {
     "maintenance",
     "fuel-expenses",
     "reports",
+    "settings",
   ],
-  driver: ["dashboard", "trips", "fuel-expenses"],
-  safety_officer: ["dashboard", "drivers"],
-  financial_analyst: ["dashboard", "fuel-expenses", "reports"],
+  driver: ["dashboard", "trips", "fuel-expenses", "settings"],
+  safety_officer: ["dashboard", "drivers", "settings"],
+  financial_analyst: ["dashboard", "fuel-expenses", "reports", "settings"],
 };
 
 // Write permissions per resource, matching schema RLS policies
@@ -68,6 +70,7 @@ export const NAV_LABELS: Record<NavItem, string> = {
   maintenance: "Maintenance",
   "fuel-expenses": "Fuel & Expenses",
   reports: "Analytics",
+  settings: "Settings",
 };
 
 /**
