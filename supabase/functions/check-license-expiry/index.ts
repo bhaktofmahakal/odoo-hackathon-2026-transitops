@@ -14,6 +14,15 @@ serve(async (req) => {
     });
   }
 
+  // Verify authorization key to secure the Edge Function
+  const authHeader = req.headers.get('Authorization') || req.headers.get('apikey') || '';
+  if (SUPABASE_SERVICE_ROLE_KEY && authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` && authHeader !== SUPABASE_SERVICE_ROLE_KEY) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
