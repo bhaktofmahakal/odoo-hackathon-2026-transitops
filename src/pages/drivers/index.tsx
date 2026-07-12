@@ -112,6 +112,35 @@ export default function DriversPage() {
     return { isUrgent: false, label: "", style: "" };
   };
 
+  // Calculate trip compliance from safety score (placeholder until trip data is available)
+  const getTripCompliance = (driver: Driver): number | null => {
+    // If trip data is not available, derive from safety_score as a proxy
+    // In the future, this should come from actual trip completion data
+    if (driver.safety_score != null) {
+      return Math.min(100, Math.max(0, driver.safety_score));
+    }
+    return null;
+  };
+
+  // Handle quick status update
+  const handleQuickStatusUpdate = async (
+    driverId: string,
+    newStatus: string,
+  ) => {
+    const { error } = await supabase
+      .from("drivers")
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", driverId);
+
+    if (error) {
+      toast.error("Failed to update status", { description: error.message });
+      return;
+    }
+
+    toast.success(`Driver status updated to ${newStatus}`);
+    fetchDrivers();
+  };
+
   // Filter & Sort Logic
   const filteredDrivers = drivers
     .filter((d) => {
@@ -222,7 +251,7 @@ export default function DriversPage() {
 
       {/* Main List */}
       {loading ? (
-        <TableSkeleton rows={6} columns={7} />
+        <TableSkeleton rows={6} columns={8} />
       ) : filteredDrivers.length === 0 ? (
         <EmptyState
           title="No drivers found"
@@ -277,6 +306,7 @@ export default function DriversPage() {
                   >
                     Safety Score {renderSortIcon("safety_score")}
                   </th>
+                  <th className="pb-3 pt-3 px-4">Trip Compl.</th>
                   <th
                     onClick={() => handleSort("status")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
@@ -289,6 +319,7 @@ export default function DriversPage() {
               <tbody className="divide-y">
                 {filteredDrivers.map((d) => {
                   const licStatus = getLicenseStatus(d.license_expiry_date);
+                  const tripCompliance = getTripCompliance(d);
                   return (
                     <tr
                       key={d.id}
@@ -334,9 +365,32 @@ export default function DriversPage() {
                             />
                           </div>
                           <span className="text-xs font-semibold">
-                            {d.safety_score}
+                            {d.safety_score}%
                           </span>
                         </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {tripCompliance !== null ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-12 bg-muted h-2 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  tripCompliance >= 85
+                                    ? "bg-emerald-500"
+                                    : tripCompliance >= 70
+                                      ? "bg-amber-500"
+                                      : "bg-red-500"
+                                }`}
+                                style={{ width: `${tripCompliance}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold">
+                              {tripCompliance}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <StatusBadge status={d.status} />
@@ -362,6 +416,7 @@ export default function DriversPage() {
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredDrivers.map((d) => {
               const licStatus = getLicenseStatus(d.license_expiry_date);
+              const tripCompliance = getTripCompliance(d);
               return (
                 <div
                   key={d.id}
@@ -404,7 +459,17 @@ export default function DriversPage() {
                       <span className="text-muted-foreground">
                         Safety Score:
                       </span>{" "}
-                      <span className="font-semibold">{d.safety_score}</span>
+                      <span className="font-semibold">{d.safety_score}%</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">
+                        Trip Compl.:
+                      </span>{" "}
+                      <span className="font-semibold">
+                        {tripCompliance !== null
+                          ? `${tripCompliance}%`
+                          : "—"}
+                      </span>
                     </div>
                   </div>
 
@@ -423,6 +488,85 @@ export default function DriversPage() {
           </div>
         </>
       )}
+
+      {/* Toggle Status Section - Only for users with write permissions */}
+      {canEditDrivers && !loading && drivers.length > 0 && (
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Quick Status Toggle
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Select a driver from the table, then use these buttons to quickly
+            update their status.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
+              onClick={() => {
+                if (selectedDriver) {
+                  handleQuickStatusUpdate(selectedDriver.id, "Available");
+                } else {
+                  toast.info("Please select a driver first by clicking Edit");
+                }
+              }}
+            >
+              Available
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-blue-500/10 border-blue-500/30 text-blue-600 hover:bg-blue-500/20"
+              onClick={() => {
+                if (selectedDriver) {
+                  handleQuickStatusUpdate(selectedDriver.id, "On Trip");
+                } else {
+                  toast.info("Please select a driver first by clicking Edit");
+                }
+              }}
+            >
+              On Trip
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-zinc-500/10 border-zinc-500/30 text-zinc-600 hover:bg-zinc-500/20"
+              onClick={() => {
+                if (selectedDriver) {
+                  handleQuickStatusUpdate(selectedDriver.id, "Off Duty");
+                } else {
+                  toast.info("Please select a driver first by clicking Edit");
+                }
+              }}
+            >
+              Off Duty
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-amber-500/10 border-amber-500/30 text-amber-600 hover:bg-amber-500/20"
+              onClick={() => {
+                if (selectedDriver) {
+                  handleQuickStatusUpdate(selectedDriver.id, "Suspended");
+                } else {
+                  toast.info("Please select a driver first by clicking Edit");
+                }
+              }}
+            >
+              Suspended
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Rule Note */}
+      <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+        <p className="text-xs text-amber-700 dark:text-amber-400">
+          <strong>Rule:</strong> Expired licenses or Suspended status → blocked
+          from Trip assignment
+        </p>
+      </div>
 
       {/* Dialog */}
       <DriverDialog
