@@ -72,4 +72,4 @@ create policy "profiles_update_self" on public.profiles
 
 -- Permissions
 revoke update on public.profiles from authenticated;
-grant select, update (full_name, email, region) on public.profiles to authenticated;
+grant select, update (full_name, email, region, role) on public.profiles to authenticated;

@@ -136,12 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
-          data: { full_name: fullName },
+          data: { full_name: fullName, role },
         },
       });
       if (error) return { error: error.message };
 
-      // Insert profile row manually (in case trigger doesn't exist yet)
+      // Also upsert profile in case trigger didn't set the role
       if (data.user) {
         await supabase.from("profiles").upsert({
           id: data.user.id,
