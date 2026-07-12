@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import type { DashboardKPIs, Trip, Vehicle } from "@/lib/types";
+import type { DashboardKPIs, Trip } from "@/lib/types";
 import { KPICards } from "./kpi-cards";
 import { RecentTrips } from "./recent-trips";
 import { VehicleStatusChart } from "./vehicle-status-chart";
