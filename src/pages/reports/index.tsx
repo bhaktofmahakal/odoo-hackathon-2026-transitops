@@ -664,25 +664,33 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {computedReports.map((row) => (
-                    <tr key={row.vehicle_id} className="hover:bg-muted/30 transition-colors">
-                      <td className="p-3 font-semibold">
-                        {row.name_model}{' '}
-                        <span className="text-[10px] text-muted-foreground font-normal">
-                          ({row.registration_number})
-                        </span>
-                      </td>
-                      <td className="p-3 text-muted-foreground">{row.type}</td>
-                      <td className="p-3 font-mono text-muted-foreground">{row.total_distance.toLocaleString()} km</td>
-                      <td className="p-3 font-mono text-muted-foreground">${row.total_fuel_cost.toLocaleString()}</td>
-                      <td className="p-3 font-mono text-muted-foreground">${row.total_maintenance_cost.toLocaleString()}</td>
-                      <td className="p-3 font-mono text-muted-foreground">${row.total_revenue.toLocaleString()}</td>
-                      <td className="p-3 font-mono font-medium">${row.total_operational_cost.toLocaleString()}</td>
-                      <td className={`p-3 font-mono font-bold text-right ${row.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                        {(row.roi * 100).toFixed(4)}%
+                  {computedReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                        No operational reports available for the selected filters.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    computedReports.map((row) => (
+                      <tr key={row.vehicle_id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-3 font-semibold">
+                          {row.name_model}{' '}
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            ({row.registration_number})
+                          </span>
+                        </td>
+                        <td className="p-3 text-muted-foreground">{row.type}</td>
+                        <td className="p-3 font-mono text-muted-foreground">{row.total_distance.toLocaleString()} km</td>
+                        <td className="p-3 font-mono text-muted-foreground">${row.total_fuel_cost.toLocaleString()}</td>
+                        <td className="p-3 font-mono text-muted-foreground">${row.total_maintenance_cost.toLocaleString()}</td>
+                        <td className="p-3 font-mono text-muted-foreground">${row.total_revenue.toLocaleString()}</td>
+                        <td className="p-3 font-mono font-medium">${row.total_operational_cost.toLocaleString()}</td>
+                        <td className={`p-3 font-mono font-bold text-right ${row.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {(row.roi * 100).toFixed(4)}%
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
