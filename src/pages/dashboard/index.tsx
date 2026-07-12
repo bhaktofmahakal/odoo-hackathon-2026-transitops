@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import type { DashboardKPIs, Trip } from "@/lib/types";
+import type { DashboardKPIs, Trip, Vehicle } from "@/lib/types";
 import { KPICards } from "./kpi-cards";
 import { RecentTrips } from "./recent-trips";
 import { VehicleStatusChart } from "./vehicle-status-chart";
@@ -20,10 +20,14 @@ export default function DashboardPage() {
 
   const [allVehicles, setAllVehicles] = useState<any[]>([]);
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      setLoading(true);
+  const fetchDashboardData = useCallback(async () => {
+    setLoading(true);
 
+    const hasFilters =
+      typeFilter !== "all" || statusFilter !== "all" || regionFilter !== "all";
+
+    if (!hasFilters) {
+      // Unfiltered: use the view (fast, server-side)
       const { data: kpiData } = await supabase
         .from("v_dashboard_kpis")
         .select("*")
@@ -31,61 +35,109 @@ export default function DashboardPage() {
 
       if (kpiData) {
         setKpis(kpiData as DashboardKPIs);
+
+        // Also fetch raw vehicles for filter dropdowns + chart
+        const { data: vehData } = await supabase
+          .from("vehicles")
+          .select("status, type, region");
+        const v = vehData || [];
+        setAllVehicles(v);
+
+        const counts: Record<string, number> = {};
+        v.forEach((ve: any) => {
+          counts[ve.status] = (counts[ve.status] || 0) + 1;
+        });
+        setVehicleStatusCounts(counts);
+
+        // Recent trips unfiltered
+        const { data: tripData } = await supabase
+          .from("trips")
+          .select("*, vehicles(registration_number, name_model), drivers(name)")
+          .order("created_at", { ascending: false })
+          .limit(5);
+        if (tripData) setRecentTrips(tripData as Trip[]);
+
         setLoading(false);
         return;
       }
-
-      const [veh, trp, drv] = await Promise.all([
-        supabase.from("vehicles").select("status, type, region"),
-        supabase.from("trips").select("status").limit(1000),
-        supabase.from("drivers").select("status"),
-      ]);
-
-      const v = veh.data || [];
-      const t = trp.data || [];
-      const d = drv.data || [];
-
-      setAllVehicles(v);
-
-      setKpis({
-        vehicles_available: v.filter((x: any) => x.status === "Available").length,
-        vehicles_active: v.filter((x: any) => x.status !== "Retired").length,
-        vehicles_in_maintenance: v.filter((x: any) => x.status === "In Shop").length,
-        trips_active: t.filter((x: any) => x.status === "Dispatched").length,
-        trips_pending: t.filter((x: any) => x.status === "Draft").length,
-        drivers_on_duty: d.filter((x: any) => x.status === "On Trip").length,
-        fleet_utilization_pct:
-          v.filter((x: any) => x.status !== "Retired").length > 0
-            ? Number(
-                (
-                  (v.filter((x: any) => x.status === "On Trip").length /
-                    v.filter((x: any) => x.status !== "Retired").length) *
-                  100
-                ).toFixed(1),
-              )
-            : 0,
-      });
-
-      const counts: Record<string, number> = {};
-      v.forEach((ve: any) => {
-        counts[ve.status] = (counts[ve.status] || 0) + 1;
-      });
-      setVehicleStatusCounts(counts);
-
-      // Fetch recent trips
-      const { data: tripData } = await supabase
-        .from("trips")
-        .select("*, vehicles(registration_number, name_model), drivers(name)")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (tripData) setRecentTrips(tripData as Trip[]);
-
-      setLoading(false);
     }
 
+    // Filtered path: query raw tables with filters
+    // 1. Fetch vehicles (with type/region filters)
+    let vehicleQuery = supabase.from("vehicles").select("id, status, type, region");
+    if (typeFilter !== "all") vehicleQuery = vehicleQuery.eq("type", typeFilter);
+    if (regionFilter !== "all") vehicleQuery = vehicleQuery.eq("region", regionFilter);
+    // Status filter on vehicles: if user picked a vehicle status, filter here
+    // But we also need to show KPIs like "trips_active" which aren't vehicle-status-based
+    // So we fetch all vehicles matching type/region, then apply status filter to KPIs separately
+
+    const { data: vehData } = await vehicleQuery;
+    const vehicles = (vehData || []) as any[];
+    setAllVehicles(vehicles);
+
+    // Apply vehicle status filter for vehicle-related KPIs
+    const filteredVehicles =
+      statusFilter !== "all"
+        ? vehicles.filter((v) => v.status === statusFilter)
+        : vehicles;
+
+    // 2. Fetch trips (filtered by vehicle ids if type/region filters active)
+    let tripQuery = supabase
+      .from("trips")
+      .select("*, vehicles(registration_number, name_model, type, region), drivers(name)")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    // For KPIs, we need ALL matching trips (not just 5), so count separately
+    let tripCountQuery = supabase.from("trips").select("status, vehicle_id");
+    if (vehicles.length > 0) {
+      const vehicleIds = vehicles.map((v) => v.id);
+      tripQuery = tripQuery.in("vehicle_id", vehicleIds);
+      tripCountQuery = tripCountQuery.in("vehicle_id", vehicleIds);
+    }
+
+    const [tripResult, tripCountResult, driverResult] = await Promise.all([
+      tripQuery,
+      tripCountQuery,
+      supabase.from("drivers").select("status"),
+    ]);
+
+    const tripRows = (tripCountResult.data || []) as any[];
+    const driverRows = (driverResult.data || []) as any[];
+
+    // 3. Compute KPIs from filtered data
+    const activeFleet = filteredVehicles.filter((v) => v.status !== "Retired").length;
+    const busyFleet = filteredVehicles.filter((v) => v.status === "On Trip").length;
+
+    setKpis({
+      vehicles_available: filteredVehicles.filter((v) => v.status === "Available").length,
+      vehicles_active: activeFleet,
+      vehicles_in_maintenance: filteredVehicles.filter((v) => v.status === "In Shop").length,
+      trips_active: tripRows.filter((t) => t.status === "Dispatched").length,
+      trips_pending: tripRows.filter((t) => t.status === "Draft").length,
+      drivers_on_duty: driverRows.filter((d) => d.status === "On Trip").length,
+      fleet_utilization_pct:
+        activeFleet > 0
+          ? Number(((busyFleet / activeFleet) * 100).toFixed(1))
+          : 0,
+    });
+
+    // 4. Vehicle status chart (filtered vehicles)
+    const counts: Record<string, number> = {};
+    filteredVehicles.forEach((v) => {
+      counts[v.status] = (counts[v.status] || 0) + 1;
+    });
+    setVehicleStatusCounts(counts);
+
+    // 5. Recent trips (filtered by vehicle ids)
+    if (tripResult.data) setRecentTrips(tripResult.data as Trip[]);
+
+    setLoading(false);
+  }, [typeFilter, statusFilter, regionFilter]);
+
+  useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const typesList = useMemo(
     () => Array.from(new Set(allVehicles.map((v: any) => v.type).filter(Boolean))) as string[],
