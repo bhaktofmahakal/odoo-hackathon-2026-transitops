@@ -163,6 +163,17 @@ export default function ReportsPage() {
       .sort((a, b) => b.efficiency - a.efficiency);
   }, [computedReports]);
 
+  const operationalCostData = useMemo(() => {
+    return computedReports
+      .filter((r) => r.total_operational_cost > 0)
+      .map((r) => ({
+        name: r.registration_number,
+        fullName: `${r.name_model} (${r.registration_number})`,
+        Fuel: r.total_fuel_cost,
+        Maintenance: r.total_maintenance_cost,
+      }));
+  }, [computedReports]);
+
   return (
     <div className="p-6 space-y-6">
       <div>
