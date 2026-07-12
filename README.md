@@ -2,6 +2,70 @@
 
 TransitOps is a centralized fleet operations, compliance, and analytics platform built for the Odoo Hackathon 2026. It manages the complete lifecycle of transport operations: vehicle registration, driver management, trip dispatching, maintenance scheduling, fuel logging, and cost analytics, with automated business rule enforcement.
 
+---
+
+## Platform Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        TRANSITOPS PLATFORM                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐     │
+│  │  LOGIN   │───▶│ DASHBOARD│───▶│  FLEET   │───▶│ TRIPS    │     │
+│  │ (RBAC)   │    │ (7 KPIs) │    │ (Vehicles│    │ (Create, │     │
+│  │          │    │          │    │  + Docs) │    │  Dispatch│     │
+│  └──────────┘    └──────────┘    └──────────┘    │  Complete)│     │
+│       │                                            └────┬─────┘     │
+│       │                                                 │           │
+│       ▼                                                 ▼           │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐     │
+│  │ DRIVERS  │    │MAINTAIN- │    │FUEL &    │    │ REPORTS  │     │
+│  │ (License │    │ ENCE     │    │EXPENSES  │    │ (Charts, │     │
+│  │  + Score)│    │ (In Shop │    │ (Logs +  │    │  CSV/PDF │     │
+│  │          │    │  → Avail)│    │  Summary)│    │  Export) │     │
+│  └──────────┘    └──────────┘    └──────────┘    └──────────┘     │
+│                                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  BUSINESS RULES (enforced at DB layer via Postgres triggers)        │
+│  ─────────────────────────────────────────────────────────────────  │
+│  1. Vehicle reg number = UNIQUE                                     │
+│  2. Retired/In Shop vehicles → hidden from dispatch                 │
+│  3. Expired license / Suspended driver → cannot be assigned         │
+│  4. On Trip vehicle/driver → cannot be double-booked                │
+│  5. Cargo weight > max capacity → BLOCKED                           │
+│  6. Dispatch → vehicle + driver auto-set to "On Trip"               │
+│  7. Complete → vehicle + driver auto-set to "Available"             │
+│  8. Cancel → vehicle + driver auto-set to "Available"               │
+│  9. Maintenance open → vehicle auto-set to "In Shop"                │
+│  10. Maintenance close → vehicle auto-set to "Available"            │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### End-to-End Lifecycle
+
+| Step | Action | What Happens Automatically |
+|------|--------|---------------------------|
+| 1 | Register Vehicle | Status = `Available`, appears in dispatch pool |
+| 2 | Register Driver | License validated, score tracked |
+| 3 | Create Trip | Select available vehicle + driver, set cargo & distance |
+| 4 | Dispatch Trip | Vehicle + driver → `On Trip`, removed from pool |
+| 5 | Complete Trip | Odometer updated, fuel logged, vehicle + driver → `Available` |
+| 6 | Log Maintenance | Vehicle → `In Shop`, removed from dispatch pool |
+| 7 | Close Maintenance | Vehicle → `Available`, cost auto-logged as expense |
+| 8 | View Reports | Fuel efficiency, ROI, operational cost — all computed live |
+
+### RBAC per Role
+
+| Role | Can See | Can Do |
+|------|---------|--------|
+| **Fleet Manager** | Everything | Create/edit vehicles, drivers, trips, maintenance, fuel, expenses |
+| **Driver** | Dashboard, Trips, Fuel, Settings | Create trips, dispatch, complete, log fuel & expenses |
+| **Safety Officer** | Dashboard, Drivers, Settings | Create/edit driver profiles, license management |
+| **Financial Analyst** | Dashboard, Fuel, Reports, Settings | Read-only + export CSV/PDF |
+
+---
+
 ## Technical Stack
 
 - **Frontend**: React + Vite + TypeScript (fully styled with premium dark mode support)
@@ -14,7 +78,7 @@ TransitOps is a centralized fleet operations, compliance, and analytics platform
 
 ---
 
-##l Key Core Features + all bonus featuresl
+## Key Core Features + All Bonus Features
 
 ### 1. Authentication & Role-Based Access Control (RBAC)
 - Secure login and registration.
@@ -60,6 +124,95 @@ TransitOps is a centralized fleet operations, compliance, and analytics platform
 - Topbar notification bell icon with an unread badge counter.
 - Notifications are populated automatically via database status cascades and license expiry checks. Mark-as-read updates the record state in real-time.
 - **check-license-expiry Edge Function**: Daily Deno function querying expiring licenses, updating in-app alerts, and notifying safety officers via Resend email delivery.
+
+---
+
+## How to Test (Evaluator Guide)
+
+### Live App
+**URL:** https://odoo-hackathon-2026-transitops.vercel.app
+
+### Test Accounts (pre-seeded, ready to login)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Fleet Manager | `admin@transitops.io` | `TransitOps123!` |
+| Safety Officer | `safety@transitops.io` | `TransitOps123!` |
+| Financial Analyst | `finance@transitops.io` | `TransitOps123!` |
+| Driver | `driver@transitops.io` | `TransitOps123!` |
+
+### Quick Test Flow (5 minutes)
+
+**Step 1 — Login as Fleet Manager**
+1. Go to the URL above
+2. Click the **Fleet Manager** role chip
+3. Enter `admin@transitops.io` / `TransitOps123!`
+4. Click **Sign In** → lands on Dashboard with 7 KPI cards
+
+**Step 2 — Register a Vehicle**
+1. Click **Fleet** in sidebar
+2. Click **Add Vehicle**
+3. Fill: Reg No `MH-14-V-0505`, Name `Maruti Eeco`, Type `Van`, Capacity `500`, Odometer `12000`, Cost `450000`, Region `Pune`
+4. Click **Add Vehicle** → appears in the table
+
+**Step 3 — Register a Driver**
+1. Click **Drivers** in sidebar
+2. Click **Register Driver**
+3. Fill: Name `Alex Rivera`, License `DL-88213`, Category `LMV`, Expiry (pick 1 year from now), Score `95`
+4. Click **Register Driver** → appears in the list
+
+**Step 4 — Create & Dispatch a Trip**
+1. Click **Trips** in sidebar
+2. Fill: Source `Pune Warehouse`, Destination `Mumbai Hub`, Vehicle `MH-14-V-0505`, Driver `Alex Rivera`, Cargo `450`, Distance `150`
+3. Click **Dispatch** → trip appears in Live Board with blue "Dispatched" badge
+
+**Step 5 — Test Business Rule (Overload Block)**
+1. Try creating another trip with same vehicle
+2. Set Cargo Weight to `600` (exceeds 500 kg capacity)
+3. Red warning appears: "Capacity exceeded by 100 kg — dispatch blocked"
+4. **Dispatch button is disabled** → system correctly blocks overload
+
+**Step 6 — Complete the Trip**
+1. In Live Board, click **Complete** on the Dispatched trip
+2. Enter: Odometer `12350`, Fuel `45`, Fuel Cost `3375`, Revenue `8500`
+3. Click **Complete Trip** → status changes to green "Completed"
+
+**Step 7 — Log Maintenance**
+1. Click **Maintenance** in sidebar
+2. Select vehicle `MH-14-V-0505`, Service `Oil Change`, Cost `2500`
+3. Click **Log Maintenance** → vehicle status changes to orange "In Shop"
+
+**Step 8 — Test RBAC (Role Switch)**
+1. Open a new incognito window
+2. Login as `finance@transitops.io` / `TransitOps123!` → Financial Analyst
+3. Notice sidebar only shows: Dashboard, Fuel & Expenses, Analytics, Settings
+4. **No Fleet, Drivers, Trips, or Maintenance** → RBAC working
+
+**Step 9 — Reports & Export**
+1. As Financial Analyst, click **Analytics**
+2. Charts visible: Fuel Efficiency (bar), Fuel Trend (line), Maintenance Cost (pie)
+3. Click **Export CSV** → downloads vehicle report
+4. Click **Export PDF** → downloads branded PDF report
+
+**Step 10 — Dark Mode**
+1. Click the sun/moon icon in topbar
+2. Entire app switches to dark mode
+3. Click again to toggle back
+
+### What to Verify
+
+| Check | Expected |
+|-------|----------|
+| Dashboard KPIs | 7 cards with real data |
+| Vehicle status badges | Green=Available, Blue=On Trip, Orange=In Shop |
+| Currency format | ₹6,20,000 (Indian grouping) |
+| Trip dispatch | Vehicle/Driver auto-set to "On Trip" |
+| Trip complete | Vehicle/Driver return to "Available" |
+| Overload block | Red warning + disabled dispatch button |
+| RBAC sidebar | Financial Analyst sees 4 items, Fleet Manager sees 8 |
+| Dark mode | Full app-wide theme toggle |
+| CSV/PDF export | Downloads work with real data |
+| Mobile responsive | Hamburger menu + card layouts on small screens |
 
 ---
 
