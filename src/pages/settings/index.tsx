@@ -176,26 +176,28 @@ function NotifToggle({
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
-      <button
-        onClick={onToggle}
-        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-          enabled ? "bg-amber-500" : "bg-muted-foreground/30"
-        }`}
-        role="switch"
-        aria-checked={enabled}
-        aria-label={`Toggle ${label}`}
-      >
-        <span
-          className={`pointer-events-none block size-3.5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onToggle}
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+            enabled ? "bg-amber-500" : "bg-muted-foreground/30"
           }`}
-        />
-      </button>
-      {enabled ? (
-        <Bell className="size-3.5 text-amber-500 shrink-0" />
-      ) : (
-        <BellOff className="size-3.5 text-muted-foreground shrink-0" />
-      )}
+          role="switch"
+          aria-checked={enabled}
+          aria-label={`Toggle ${label}`}
+        >
+          <span
+            className={`pointer-events-none block size-3.5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+              enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+            }`}
+          />
+        </button>
+        {enabled ? (
+          <Bell className="size-3.5 text-amber-500 shrink-0" />
+        ) : (
+          <BellOff className="size-3.5 text-muted-foreground shrink-0" />
+        )}
+      </div>
     </div>
   );
 }
