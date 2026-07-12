@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Papa from "papaparse";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import {
   BarChart,
   Bar,
@@ -371,7 +371,7 @@ export default function ReportsPage() {
     );
 
     // Table mapping
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [
         [
           "Vehicle",
@@ -647,12 +647,13 @@ export default function ReportsPage() {
               </div>
 
               {fuelEfficiencyData.length === 0 ? (
-                <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-muted/10 text-xs text-muted-foreground">
-                  No fuel refill data available for the selected range.
+                <div className="h-64 flex flex-col items-center justify-center border border-dashed rounded-lg bg-muted/10 text-xs text-muted-foreground gap-1">
+                  <span>No fuel efficiency data for the selected range.</span>
+                  <span>Complete trips or add fuel logs to see data here.</span>
                 </div>
               ) : (
                 <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={288}>
                     <BarChart
                       data={fuelEfficiencyData}
                       margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -729,12 +730,13 @@ export default function ReportsPage() {
               </div>
 
               {operationalCostData.length === 0 ? (
-                <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-muted/10 text-xs text-muted-foreground">
-                  No operational cost data logged for the selected range.
+                <div className="h-64 flex flex-col items-center justify-center border border-dashed rounded-lg bg-muted/10 text-xs text-muted-foreground gap-1">
+                  <span>No operational cost data for the selected range.</span>
+                  <span>Log fuel purchases or close maintenance to see costs here.</span>
                 </div>
               ) : (
                 <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={288}>
                     <BarChart
                       data={operationalCostData}
                       margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

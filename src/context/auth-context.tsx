@@ -22,11 +22,13 @@ interface AuthContextType extends AuthState {
   signIn: (
     email: string,
     password: string,
+    expectedRole?: UserRole,
   ) => Promise<{ error: string | null }>;
   signUp: (
     email: string,
     password: string,
     fullName: string,
+    role: UserRole,
   ) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
@@ -100,22 +102,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (
+    email: string,
+    password: string,
+    expectedRole?: UserRole,
+  ) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) return { error: error.message };
+
+    if (expectedRole) {
+      const { data: { user } } = await supabase.auth.getUser();
+      const profile = user ? await fetchProfile(user.id) : null;
+
+      if (!profile || profile.role !== expectedRole) {
+        await supabase.auth.signOut();
+        return {
+          error: profile
+            ? `This account is assigned to ${profile.role.replace("_", " ")}.`
+            : "Your profile is not ready yet. Please contact a fleet administrator.",
+        };
+      }
+    }
+
     return { error: null };
-  }, []);
+  }, [fetchProfile]);
 
   const signUp = useCallback(
-    async (email: string, password: string, fullName: string) => {
+    async (email: string, password: string, fullName: string, role: UserRole) => {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName },
+          data: { full_name: fullName, role },
         },
       });
       if (error) return { error: error.message };
