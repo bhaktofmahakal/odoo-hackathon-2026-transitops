@@ -419,6 +419,18 @@ LEFT JOIN trips t ON t.vehicle_id = v.id
 GROUP BY v.id;
 
 -- ============================================================
+-- GRANTS: service_role needs full access for edge functions + REST API
+-- ============================================================
+GRANT ALL ON profiles TO service_role;
+GRANT ALL ON vehicles TO service_role;
+GRANT ALL ON drivers TO service_role;
+GRANT ALL ON trips TO service_role;
+GRANT ALL ON maintenance_logs TO service_role;
+GRANT ALL ON fuel_logs TO service_role;
+GRANT ALL ON expenses TO service_role;
+GRANT ALL ON notifications TO service_role;
+
+-- ============================================================
 -- SEED: create your first fleet_manager after signup manually via:
 -- UPDATE profiles SET role = 'fleet_manager' WHERE email = 'you@example.com';
 -- ============================================================
