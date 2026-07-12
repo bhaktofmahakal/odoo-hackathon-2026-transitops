@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { toast } from 'sonner';
-import { Truck } from 'lucide-react';
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('');
