@@ -11,11 +11,8 @@ import { toast } from "sonner";
 import {
   Search,
   Plus,
-  Edit2,
-  Trash2,
   ChevronDown,
   ChevronUp,
-  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,8 +23,7 @@ type SortKey =
   | "max_load_capacity"
   | "odometer"
   | "acquisition_cost"
-  | "status"
-  | "region";
+  | "status";
 type SortOrder = "asc" | "desc";
 
 export default function VehiclesPage() {
@@ -41,7 +37,6 @@ export default function VehiclesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [regionFilter, setRegionFilter] = useState<string>("all");
 
   // Sorting state
   const [sortKey, setSortKey] = useState<SortKey>("registration_number");
@@ -53,7 +48,6 @@ export default function VehiclesPage() {
 
   // Unique list of types and regions from vehicles for dynamic filters
   const [typesList, setTypesList] = useState<string[]>([]);
-  const [regionsList, setRegionsList] = useState<string[]>([]);
 
   const fetchVehicles = async () => {
     setLoading(true);
@@ -69,15 +63,11 @@ export default function VehiclesPage() {
       const vData = data as Vehicle[];
       setVehicles(vData);
 
-      // Extract unique types and regions for filters
+      // Extract unique types for filters
       const types = Array.from(
         new Set(vData.map((v) => v.type).filter(Boolean)),
       ) as string[];
-      const regions = Array.from(
-        new Set(vData.map((v) => v.region).filter(Boolean)),
-      ) as string[];
       setTypesList(types);
-      setRegionsList(regions);
     }
     setLoading(false);
   };
@@ -94,31 +84,6 @@ export default function VehiclesPage() {
   const handleCreate = () => {
     setSelectedVehicle(null);
     setDialogOpen(true);
-  };
-
-  const handleDelete = async (vehicle: Vehicle) => {
-    if (!isManager) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently delete vehicle ${vehicle.registration_number}? Alternatively, you can edit it and set its status to "Retired".`,
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await supabase
-      .from("vehicles")
-      .delete()
-      .eq("id", vehicle.id);
-
-    if (error) {
-      toast.error("Failed to delete vehicle", {
-        description: error.message,
-      });
-      return;
-    }
-
-    toast.success("Vehicle deleted successfully");
-    fetchVehicles();
   };
 
   const handleSort = (key: SortKey) => {
@@ -141,12 +106,8 @@ export default function VehiclesPage() {
 
       const matchesStatus = statusFilter === "all" || v.status === statusFilter;
       const matchesType = typeFilter === "all" || v.type === typeFilter;
-      const matchesRegion =
-        regionFilter === "all" ||
-        (regionFilter === "empty" && !v.region) ||
-        v.region === regionFilter;
 
-      return matchesSearch && matchesStatus && matchesType && matchesRegion;
+      return matchesSearch && matchesStatus && matchesType;
     })
     .sort((a, b) => {
       let aValue = a[sortKey] ?? "";
@@ -239,28 +200,12 @@ export default function VehiclesPage() {
             <option value="In Shop">In Shop</option>
             <option value="Retired">Retired</option>
           </select>
-
-          {/* Region Filter */}
-          <select
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-            className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <option value="all">All Regions</option>
-            <option value="empty">Unassigned Region</option>
-            {regionsList.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Filters Clear / Indicator */}
         {(searchQuery ||
           statusFilter !== "all" ||
-          typeFilter !== "all" ||
-          regionFilter !== "all") && (
+          typeFilter !== "all") && (
           <Button
             variant="ghost"
             size="sm"
@@ -268,7 +213,6 @@ export default function VehiclesPage() {
               setSearchQuery("");
               setStatusFilter("all");
               setTypeFilter("all");
-              setRegionFilter("all");
             }}
             className="text-xs text-amber-500 hover:text-amber-400 self-start"
           >
@@ -286,8 +230,7 @@ export default function VehiclesPage() {
           description={
             searchQuery ||
             statusFilter !== "all" ||
-            typeFilter !== "all" ||
-            regionFilter !== "all"
+            typeFilter !== "all"
               ? "Try modifying your search or filter options"
               : "Start by registering your first vehicle"
           }
@@ -343,18 +286,11 @@ export default function VehiclesPage() {
                     Acq. Cost {renderSortIcon("acquisition_cost")}
                   </th>
                   <th
-                    onClick={() => handleSort("region")}
-                    className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
-                  >
-                    Region {renderSortIcon("region")}
-                  </th>
-                  <th
                     onClick={() => handleSort("status")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
                     Status {renderSortIcon("status")}
                   </th>
-                  <th className="pb-3 pt-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -373,7 +309,9 @@ export default function VehiclesPage() {
                       {v.type}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground font-mono">
-                      {v.max_load_capacity.toLocaleString()} kg
+                      {v.max_load_capacity >= 1000
+                        ? `${v.max_load_capacity / 1000} Ton`
+                        : `${v.max_load_capacity} kg`}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground font-mono">
                       {v.odometer.toLocaleString()} km
@@ -381,44 +319,8 @@ export default function VehiclesPage() {
                     <td className="py-3 px-4 text-muted-foreground font-mono">
                       ${v.acquisition_cost.toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      {v.region || "—"}
-                    </td>
                     <td className="py-3 px-4">
                       <StatusBadge status={v.status} />
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {v.document_url && (
-                          <a
-                            href={v.document_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex size-8 items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            title="View Document"
-                          >
-                            <FileText className="size-4" />
-                          </a>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(v)}
-                          className="size-8"
-                        >
-                          <Edit2 className="size-4" />
-                        </Button>
-                        {isManager && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(v)}
-                            className="size-8 text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -449,7 +351,9 @@ export default function VehiclesPage() {
                   <div>
                     <span className="text-muted-foreground">Capacity:</span>{" "}
                     <span className="font-medium font-mono">
-                      {v.max_load_capacity} kg
+                      {v.max_load_capacity >= 1000
+                        ? `${v.max_load_capacity / 1000} Ton`
+                        : `${v.max_load_capacity} kg`}
                     </span>
                   </div>
                   <div>
@@ -464,50 +368,29 @@ export default function VehiclesPage() {
                       ${v.acquisition_cost}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Region:</span>{" "}
-                    <span className="font-medium">{v.region || "—"}</span>
-                  </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t pt-2 mt-1">
-                  <div>
-                    {v.document_url && (
-                      <a
-                        href={v.document_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-amber-500 font-medium hover:underline"
-                      >
-                        <FileText className="size-3.5" />
-                        View Document
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(v)}
-                    >
-                      Edit
-                    </Button>
-                    {isManager && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(v)}
-                        className="text-destructive border-destructive/30 hover:bg-destructive/5"
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </div>
+                <div className="flex items-center justify-end border-t pt-2 mt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(v)}
+                  >
+                    Edit
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         </>
+      )}
+
+      {/* Note */}
+      {!loading && (
+        <p className="text-xs text-muted-foreground mt-4">
+          Registration No. must be unique. Retired/In Shop vehicles are hidden
+          from Trip Dispatcher.
+        </p>
       )}
 
       {/* Dialog */}
