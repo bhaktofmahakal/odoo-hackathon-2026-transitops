@@ -454,7 +454,7 @@ export default function ReportsPage() {
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Fleet</p>
                 <p className="text-xl font-bold font-mono">
-                  {vehicles.filter((v) => v.status !== 'Retired').length}
+                  {computedReports.filter((r) => r.status !== 'Retired').length}
                 </p>
               </div>
             </div>
@@ -467,8 +467,8 @@ export default function ReportsPage() {
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fleet Utilization</p>
                 <p className="text-xl font-bold font-mono">
                   {(() => {
-                    const active = vehicles.filter((v) => v.status !== 'Retired').length;
-                    const busy = vehicles.filter((v) => v.status === 'On Trip').length;
+                    const active = computedReports.filter((r) => r.status !== 'Retired').length;
+                    const busy = computedReports.filter((r) => r.status === 'On Trip').length;
                     return active > 0 ? ((busy / active) * 100).toFixed(1) : '0.0';
                   })()}%
                 </p>
