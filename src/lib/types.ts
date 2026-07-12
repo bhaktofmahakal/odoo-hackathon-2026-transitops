@@ -13,7 +13,7 @@ export type DriverStatus = "Available" | "On Trip" | "Off Duty" | "Suspended";
 
 export type TripStatus = "Draft" | "Dispatched" | "Completed" | "Cancelled";
 
-export type MaintenanceStatus = "Active" | "Closed";
+export type MaintenanceStatus = "In Shop" | "Completed";
 
 // ---------- TABLE TYPES ----------
 

@@ -43,7 +43,7 @@ export function MaintenanceDialog({
         const { data: activeLogs } = await supabase
           .from("maintenance_logs")
           .select("vehicle_id")
-          .eq("status", "Active");
+          .eq("status", "In Shop");
 
         const busyVehicleIds = activeLogs?.map((l) => l.vehicle_id) || [];
 
@@ -99,7 +99,7 @@ export function MaintenanceDialog({
           vehicle_id: selectedVehicleId,
           description: description.trim(),
           cost: parsedCost,
-          status: "Active",
+          status: "In Shop",
         },
       ]);
 

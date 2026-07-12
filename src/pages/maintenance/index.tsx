@@ -64,24 +64,24 @@ export default function MaintenancePage() {
     if (!isManager) return;
 
     const confirmed = window.confirm(
-      "Are you sure you want to Close this maintenance record? This will release the vehicle back to Available and log the expense automatically.",
+      "Are you sure you want to mark this maintenance as Completed? This will release the vehicle back to Available and log the expense automatically.",
     );
     if (!confirmed) return;
 
     try {
       const { error } = await supabase
         .from("maintenance_logs")
-        .update({ status: "Closed", closed_at: new Date().toISOString() })
+        .update({ status: "Completed", closed_at: new Date().toISOString() })
         .eq("id", logId);
 
       if (error) {
         throw new Error(error.message);
       }
 
-      toast.success("Maintenance closed successfully. Expense recorded.");
+      toast.success("Maintenance completed successfully. Expense recorded.");
       fetchLogsAndVehicles();
     } catch (err: any) {
-      toast.error("Failed to close maintenance", { description: err.message });
+      toast.error("Failed to complete maintenance", { description: err.message });
     }
   }
 
@@ -126,8 +126,8 @@ export default function MaintenancePage() {
           className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <option value="all">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Closed">Closed</option>
+          <option value="In Shop">In Shop</option>
+          <option value="Completed">Completed</option>
         </select>
 
         {/* Vehicle Filter */}
@@ -158,6 +158,23 @@ export default function MaintenancePage() {
           </Button>
         )}
       </div>
+
+      {/* Summary bar */}
+      {!loading && logs.length > 0 && (
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-orange-400" />
+            In Shop: <strong className="text-foreground font-semibold">{logs.filter((l) => l.status === "In Shop").length}</strong>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-emerald-400" />
+            Completed: <strong className="text-foreground font-semibold">{logs.filter((l) => l.status === "Completed").length}</strong>
+          </span>
+          <span className="ml-auto font-medium">
+            Total: <strong className="text-foreground">{logs.length}</strong>
+          </span>
+        </div>
+      )}
 
       {/* List content */}
       {loading ? (
@@ -231,14 +248,14 @@ export default function MaintenancePage() {
                     </td>
                     {isManager && (
                       <td className="py-3 px-4 text-right">
-                        {log.status === "Active" && (
+                        {log.status === "In Shop" && (
                           <Button
                             size="sm"
                             onClick={() => handleCloseMaintenance(log.id)}
                             className="bg-emerald-600 hover:bg-emerald-700 h-8"
                           >
                             <CheckCircle className="size-3.5 mr-1" />
-                            Close
+                            Complete
                           </Button>
                         )}
                       </td>
@@ -293,7 +310,7 @@ export default function MaintenancePage() {
                   )}
                 </div>
 
-                {isManager && log.status === "Active" && (
+                {isManager && log.status === "In Shop" && (
                   <div className="flex items-center justify-end border-t pt-2 mt-1">
                     <Button
                       size="sm"
@@ -301,7 +318,7 @@ export default function MaintenancePage() {
                       className="bg-emerald-600 hover:bg-emerald-700 w-full"
                     >
                       <CheckCircle className="size-3.5 mr-1" />
-                      Close Maintenance
+                      Complete Maintenance
                     </Button>
                   </div>
                 )}
@@ -317,6 +334,11 @@ export default function MaintenancePage() {
         onOpenChange={setDialogOpen}
         onSuccess={fetchLogsAndVehicles}
       />
+
+      {/* Info note */}
+      <p className="text-xs text-muted-foreground italic">
+        In Shop vehicles are removed from the dispatch pool
+      </p>
     </div>
   );
 }

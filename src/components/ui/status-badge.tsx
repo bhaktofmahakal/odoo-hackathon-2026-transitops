@@ -23,9 +23,6 @@ const STATUS_STYLES: Record<string, string> = {
   Dispatched: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   Completed: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   Cancelled: "bg-red-500/15 text-red-400 border-red-500/30",
-  // Maintenance statuses
-  Active: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-  Closed: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
 };
 
 interface StatusBadgeProps {
