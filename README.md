@@ -14,7 +14,7 @@ TransitOps is a centralized fleet operations, compliance, and analytics platform
 
 ---
 
-## Key Core Features
+##l Key Core Features + all bonus featuresl
 
 ### 1. Authentication & Role-Based Access Control (RBAC)
 - Secure login and registration.
