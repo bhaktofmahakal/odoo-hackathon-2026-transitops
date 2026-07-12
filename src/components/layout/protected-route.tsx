@@ -1,6 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/context/auth-context';
-import { PageSkeleton } from '@/components/ui/loading-skeleton';
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/context/auth-context";
+import { PageSkeleton } from "@/components/ui/loading-skeleton";
 
 export function ProtectedRoute() {
   const { session, loading } = useAuth();

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface TableSkeletonProps {
   rows?: number;
@@ -6,9 +6,13 @@ interface TableSkeletonProps {
   className?: string;
 }
 
-export function TableSkeleton({ rows = 5, columns = 5, className }: TableSkeletonProps) {
+export function TableSkeleton({
+  rows = 5,
+  columns = 5,
+  className,
+}: TableSkeletonProps) {
   return (
-    <div className={cn('w-full space-y-3', className)}>
+    <div className={cn("w-full space-y-3", className)}>
       {/* Header */}
       <div className="flex gap-4">
         {Array.from({ length: columns }).map((_, i) => (
@@ -37,7 +41,7 @@ interface CardSkeletonProps {
 
 export function CardSkeleton({ className }: CardSkeletonProps) {
   return (
-    <div className={cn('rounded-xl border bg-card p-6 space-y-3', className)}>
+    <div className={cn("rounded-xl border bg-card p-6 space-y-3", className)}>
       <div className="h-3 w-24 animate-pulse rounded bg-muted" />
       <div className="h-8 w-16 animate-pulse rounded bg-muted" />
     </div>
@@ -50,7 +54,7 @@ interface PageSkeletonProps {
 
 export function PageSkeleton({ className }: PageSkeletonProps) {
   return (
-    <div className={cn('space-y-6 p-6', className)}>
+    <div className={cn("space-y-6 p-6", className)}>
       <div className="h-8 w-48 animate-pulse rounded bg-muted" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (

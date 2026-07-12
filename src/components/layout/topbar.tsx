@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/auth-context';
-import { useTheme } from '@/context/theme-context';
-import { ROLE_LABELS } from '@/lib/permissions';
-import { Sun, Moon, LogOut, Bell, Check, Info } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import type { Notification } from '@/lib/types';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/auth-context";
+import { useTheme } from "@/context/theme-context";
+import { ROLE_LABELS } from "@/lib/permissions";
+import { Sun, Moon, LogOut, Bell, Check, Info } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import type { Notification } from "@/lib/types";
 
 export function Topbar() {
   const { profile, role, signOut } = useAuth();
@@ -21,9 +21,9 @@ export function Topbar() {
 
     async function fetchNotifications() {
       const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
         .limit(10);
       if (data) {
         setNotifications(data as Notification[]);
@@ -32,17 +32,17 @@ export function Topbar() {
     fetchNotifications();
 
     const channel = supabase
-      .channel('notifications_changes')
+      .channel("notifications_changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
+          event: "*",
+          schema: "public",
+          table: "notifications",
         },
         () => {
           fetchNotifications();
-        }
+        },
       )
       .subscribe();
 
@@ -53,12 +53,12 @@ export function Topbar() {
 
   async function markAsRead(id: string) {
     const { error } = await supabase
-      .from('notifications')
+      .from("notifications")
       .update({ is_read: true })
-      .eq('id', id);
+      .eq("id", id);
     if (!error) {
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
       );
     }
   }
@@ -69,12 +69,12 @@ export function Topbar() {
     if (unreadIds.length === 0) return;
 
     const { error } = await supabase
-      .from('notifications')
+      .from("notifications")
       .update({ is_read: true })
-      .in('id', unreadIds);
+      .in("id", unreadIds);
     if (!error) {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-      toast.success('All notifications marked as read');
+      toast.success("All notifications marked as read");
     }
   }
 
@@ -82,12 +82,12 @@ export function Topbar() {
 
   async function handleSignOut() {
     await signOut();
-    toast.success('Signed out');
-    navigate('/login');
+    toast.success("Signed out");
+    navigate("/login");
   }
 
   function toggleTheme() {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(theme === "dark" ? "light" : "dark");
   }
 
   return (
@@ -108,9 +108,11 @@ export function Topbar() {
         <button
           onClick={toggleTheme}
           className="flex size-8 items-center justify-center rounded-md hover:bg-muted transition-colors"
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={
+            theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+          }
         >
-          {theme === 'dark' ? (
+          {theme === "dark" ? (
             <Sun className="size-4 text-muted-foreground" />
           ) : (
             <Moon className="size-4 text-muted-foreground" />
@@ -132,13 +134,15 @@ export function Topbar() {
 
           {showNotifications && (
             <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setShowNotifications(false)} 
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowNotifications(false)}
               />
               <div className="absolute right-0 mt-2 w-80 rounded-lg border bg-card p-2 shadow-lg ring-1 ring-black/5 z-50">
                 <div className="flex items-center justify-between border-b pb-2 mb-2 px-2">
-                  <span className="text-xs font-bold text-foreground">Notifications</span>
+                  <span className="text-xs font-bold text-foreground">
+                    Notifications
+                  </span>
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
@@ -163,14 +167,20 @@ export function Topbar() {
                           setShowNotifications(false);
                         }}
                         className={`w-full text-left p-2 rounded-md transition-colors hover:bg-muted/50 flex gap-2.5 items-start text-xs ${
-                          !n.is_read ? 'bg-muted/30 font-medium' : ''
+                          !n.is_read ? "bg-muted/30 font-medium" : ""
                         }`}
                       >
-                        <Info className={`size-3.5 mt-0.5 shrink-0 ${
-                          n.type === 'license_expiry' ? 'text-red-500' : 'text-blue-500'
-                        }`} />
+                        <Info
+                          className={`size-3.5 mt-0.5 shrink-0 ${
+                            n.type === "license_expiry"
+                              ? "text-red-500"
+                              : "text-blue-500"
+                          }`}
+                        />
                         <div className="flex-1 space-y-0.5">
-                          <p className="text-foreground leading-tight">{n.message}</p>
+                          <p className="text-foreground leading-tight">
+                            {n.message}
+                          </p>
                           <p className="text-[10px] text-muted-foreground">
                             {new Date(n.created_at).toLocaleDateString()}
                           </p>
@@ -191,18 +201,20 @@ export function Topbar() {
         {profile && (
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium leading-none">{profile.full_name}</p>
+              <p className="text-sm font-medium leading-none">
+                {profile.full_name}
+              </p>
               <p className="text-xs text-muted-foreground">
-                {role ? ROLE_LABELS[role] : ''}
+                {role ? ROLE_LABELS[role] : ""}
               </p>
             </div>
 
             {/* Avatar */}
             <div className="flex size-8 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white">
               {profile.full_name
-                .split(' ')
+                .split(" ")
                 .map((n) => n[0])
-                .join('')
+                .join("")
                 .toUpperCase()
                 .slice(0, 2)}
             </div>

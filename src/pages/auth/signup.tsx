@@ -1,12 +1,12 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/context/auth-context';
-import { toast } from 'sonner';
+import { useState, type FormEvent } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/context/auth-context";
+import { toast } from "sonner";
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -18,21 +18,21 @@ export default function SignupPage() {
     const { error } = await signUp(email, password, fullName);
 
     if (error) {
-      toast.error('Sign up failed', { description: error });
+      toast.error("Sign up failed", { description: error });
       setLoading(false);
       return;
     }
 
-    toast.success('Account created!', {
-      description: 'Please check your email to verify, then sign in.',
+    toast.success("Account created!", {
+      description: "Please check your email to verify, then sign in.",
     });
-    navigate('/login');
+    navigate("/login");
   }
 
   return (
     <div className="flex min-h-screen">
       {/* Left panel — branding (reused from login) */}
-      <div 
+      <div
         className="hidden lg:flex lg:w-[45%] flex-col justify-between p-10 bg-cover bg-center relative"
         style={{ backgroundImage: `url('/login-banner.png')` }}
       >
@@ -40,23 +40,34 @@ export default function SignupPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
-              <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
+              <img
+                src="/logo.png"
+                alt="TransitOps Logo"
+                className="size-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">TransitOps</h1>
-              <p className="text-sm text-zinc-400">Smart Transport Operations Platform</p>
+              <p className="text-sm text-zinc-400">
+                Smart Transport Operations Platform
+              </p>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 space-y-3">
-          <h2 className="text-lg font-semibold text-white">Join your fleet team</h2>
+          <h2 className="text-lg font-semibold text-white">
+            Join your fleet team
+          </h2>
           <p className="text-sm text-zinc-400">
-            Create an account to get started. Your role will be assigned by your fleet administrator.
+            Create an account to get started. Your role will be assigned by your
+            fleet administrator.
           </p>
         </div>
 
-        <p className="relative z-10 text-xs text-zinc-500">TRANSITOPS © 2026 · RBAC ENF.</p>
+        <p className="relative z-10 text-xs text-zinc-500">
+          TRANSITOPS © 2026 · RBAC ENF.
+        </p>
       </div>
 
       {/* Right panel — sign up form */}
@@ -65,13 +76,19 @@ export default function SignupPage() {
           {/* Mobile branding */}
           <div className="flex items-center gap-3 mb-4 lg:hidden">
             <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
-              <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
+              <img
+                src="/logo.png"
+                alt="TransitOps Logo"
+                className="size-full object-cover"
+              />
             </div>
             <h1 className="text-xl font-bold">TransitOps</h1>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Create your account</h2>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Create your account
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Fill in your details to get started
             </p>
@@ -79,7 +96,10 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="full-name" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="full-name"
+                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+              >
                 Full Name
               </label>
               <input
@@ -94,7 +114,10 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+              >
                 Email
               </label>
               <input
@@ -109,7 +132,10 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+              >
                 Password
               </label>
               <input
@@ -129,13 +155,16 @@ export default function SignupPage() {
               disabled={loading}
               className="w-full h-11 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account…' : 'Create Account'}
+              {loading ? "Creating account…" : "Create Account"}
             </button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <Link to="/login" className="text-amber-500 hover:text-amber-400 font-medium">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-amber-500 hover:text-amber-400 font-medium"
+            >
               Sign in
             </Link>
           </p>

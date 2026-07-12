@@ -4,15 +4,16 @@
 
 // ---------- ENUMS ----------
 
-export type UserRole = 'fleet_manager' | 'driver' | 'safety_officer' | 'financial_analyst';
+export type UserRole =
+  "fleet_manager" | "driver" | "safety_officer" | "financial_analyst";
 
-export type VehicleStatus = 'Available' | 'On Trip' | 'In Shop' | 'Retired';
+export type VehicleStatus = "Available" | "On Trip" | "In Shop" | "Retired";
 
-export type DriverStatus = 'Available' | 'On Trip' | 'Off Duty' | 'Suspended';
+export type DriverStatus = "Available" | "On Trip" | "Off Duty" | "Suspended";
 
-export type TripStatus = 'Draft' | 'Dispatched' | 'Completed' | 'Cancelled';
+export type TripStatus = "Draft" | "Dispatched" | "Completed" | "Cancelled";
 
-export type MaintenanceStatus = 'Active' | 'Closed';
+export type MaintenanceStatus = "Active" | "Closed";
 
 // ---------- TABLE TYPES ----------
 
@@ -72,8 +73,8 @@ export interface Trip {
   created_by: string | null;
   created_at: string;
   // Joined fields (optional, for display)
-  vehicles?: Pick<Vehicle, 'registration_number' | 'name_model'>;
-  drivers?: Pick<Driver, 'name'>;
+  vehicles?: Pick<Vehicle, "registration_number" | "name_model">;
+  drivers?: Pick<Driver, "name">;
 }
 
 export interface MaintenanceLog {
@@ -85,7 +86,7 @@ export interface MaintenanceLog {
   opened_at: string;
   closed_at: string | null;
   // Joined fields
-  vehicles?: Pick<Vehicle, 'registration_number' | 'name_model'>;
+  vehicles?: Pick<Vehicle, "registration_number" | "name_model">;
 }
 
 export interface FuelLog {
@@ -97,7 +98,7 @@ export interface FuelLog {
   log_date: string;
   created_at: string;
   // Joined fields
-  vehicles?: Pick<Vehicle, 'registration_number' | 'name_model'>;
+  vehicles?: Pick<Vehicle, "registration_number" | "name_model">;
 }
 
 export interface Expense {
@@ -109,7 +110,7 @@ export interface Expense {
   expense_date: string;
   created_at: string;
   // Joined fields
-  vehicles?: Pick<Vehicle, 'registration_number' | 'name_model'>;
+  vehicles?: Pick<Vehicle, "registration_number" | "name_model">;
 }
 
 export interface Notification {

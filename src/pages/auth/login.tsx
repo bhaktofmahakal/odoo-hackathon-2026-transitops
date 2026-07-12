@@ -1,11 +1,11 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/context/auth-context';
-import { toast } from 'sonner';
+import { useState, type FormEvent } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/context/auth-context";
+import { toast } from "sonner";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -17,19 +17,19 @@ export default function LoginPage() {
     const { error } = await signIn(email, password);
 
     if (error) {
-      toast.error('Sign in failed', { description: error });
+      toast.error("Sign in failed", { description: error });
       setLoading(false);
       return;
     }
 
-    toast.success('Welcome back!');
-    navigate('/dashboard');
+    toast.success("Welcome back!");
+    navigate("/dashboard");
   }
 
   return (
     <div className="flex min-h-screen">
       {/* Left panel — branding */}
-      <div 
+      <div
         className="hidden lg:flex lg:w-[45%] flex-col justify-between p-10 bg-cover bg-center relative"
         style={{ backgroundImage: `url('/login-banner.png')` }}
       >
@@ -37,17 +37,25 @@ export default function LoginPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
-              <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
+              <img
+                src="/logo.png"
+                alt="TransitOps Logo"
+                className="size-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">TransitOps</h1>
-              <p className="text-sm text-zinc-400">Smart Transport Operations Platform</p>
+              <p className="text-sm text-zinc-400">
+                Smart Transport Operations Platform
+              </p>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 space-y-4">
-          <p className="text-sm font-medium text-zinc-300">One login, four roles:</p>
+          <p className="text-sm font-medium text-zinc-300">
+            One login, four roles:
+          </p>
           <ul className="space-y-2 text-sm text-zinc-400">
             <li className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-amber-500" />
@@ -68,7 +76,9 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        <p className="relative z-10 text-xs text-zinc-500">TRANSITOPS © 2026 · RBAC ENF.</p>
+        <p className="relative z-10 text-xs text-zinc-500">
+          TRANSITOPS © 2026 · RBAC ENF.
+        </p>
       </div>
 
       {/* Right panel — sign in form */}
@@ -77,13 +87,19 @@ export default function LoginPage() {
           {/* Mobile branding */}
           <div className="flex items-center gap-3 mb-4 lg:hidden">
             <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden border border-amber-500/20 bg-zinc-950">
-              <img src="/logo.png" alt="TransitOps Logo" className="size-full object-cover" />
+              <img
+                src="/logo.png"
+                alt="TransitOps Logo"
+                className="size-full object-cover"
+              />
             </div>
             <h1 className="text-xl font-bold">TransitOps</h1>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Sign in to your account</h2>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Sign in to your account
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Enter your credentials to continue
             </p>
@@ -91,7 +107,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+              >
                 Email
               </label>
               <input
@@ -106,7 +125,10 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
+              >
                 Password
               </label>
               <input
@@ -125,7 +147,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full h-11 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? "Signing in…" : "Sign In"}
             </button>
           </form>
 
@@ -142,8 +164,11 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-amber-500 hover:text-amber-400 font-medium">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="text-amber-500 hover:text-amber-400 font-medium"
+            >
               Sign up
             </Link>
           </p>

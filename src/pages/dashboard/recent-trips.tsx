@@ -1,8 +1,8 @@
-import type { Trip } from '@/lib/types';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { TableSkeleton } from '@/components/ui/loading-skeleton';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Route } from 'lucide-react';
+import type { Trip } from "@/lib/types";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Route } from "lucide-react";
 
 interface RecentTripsProps {
   trips: Trip[];
@@ -47,25 +47,28 @@ export function RecentTrips({ trips, loading }: RecentTripsProps) {
             </thead>
             <tbody className="divide-y">
               {trips.map((trip, i) => (
-                <tr key={trip.id} className="hover:bg-muted/50 transition-colors">
+                <tr
+                  key={trip.id}
+                  className="hover:bg-muted/50 transition-colors"
+                >
                   <td className="py-3 pr-4 font-medium">
-                    TR{String(i + 1).padStart(3, '0')}
+                    TR{String(i + 1).padStart(3, "0")}
                   </td>
                   <td className="py-3 pr-4 text-muted-foreground">
-                    {trip.vehicles?.name_model ?? '—'}
+                    {trip.vehicles?.name_model ?? "—"}
                   </td>
                   <td className="py-3 pr-4 text-muted-foreground">
-                    {trip.drivers?.name ?? '—'}
+                    {trip.drivers?.name ?? "—"}
                   </td>
                   <td className="py-3 pr-4">
                     <StatusBadge status={trip.status} />
                   </td>
                   <td className="py-3 text-muted-foreground">
-                    {trip.status === 'Dispatched'
-                      ? 'In transit'
-                      : trip.status === 'Draft'
-                        ? 'Awaiting dispatch'
-                        : '—'}
+                    {trip.status === "Dispatched"
+                      ? "In transit"
+                      : trip.status === "Draft"
+                        ? "Awaiting dispatch"
+                        : "—"}
                   </td>
                 </tr>
               ))}

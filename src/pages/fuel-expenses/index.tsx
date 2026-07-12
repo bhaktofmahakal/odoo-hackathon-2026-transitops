@@ -1,22 +1,28 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { FuelLog, Expense, VehicleReport } from '@/lib/types';
-import { useAuth } from '@/context/auth-context';
-import { canWrite } from '@/lib/permissions';
-import { EmptyState } from '@/components/ui/empty-state';
-import { TableSkeleton } from '@/components/ui/loading-skeleton';
-import { FuelDialog } from './fuel-dialog';
-import { ExpenseDialog } from './expense-dialog';
-import { toast } from 'sonner';
-import { Fuel, Receipt, Plus, DollarSign, Gauge } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import type { FuelLog, Expense, VehicleReport } from "@/lib/types";
+import { useAuth } from "@/context/auth-context";
+import { canWrite } from "@/lib/permissions";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import { FuelDialog } from "./fuel-dialog";
+import { ExpenseDialog } from "./expense-dialog";
+import { toast } from "sonner";
+import { Fuel, Receipt, Plus, DollarSign, Gauge } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function FuelExpensesPage() {
   const { role } = useAuth();
   // fleet_manager and driver can write fuel/expenses
-  const isAuthorized = role && (canWrite(role, 'fuel_logs') || role === 'driver' || role === 'fleet_manager');
+  const isAuthorized =
+    role &&
+    (canWrite(role, "fuel_logs") ||
+      role === "driver" ||
+      role === "fleet_manager");
 
-  const [activeTab, setActiveTab] = useState<'fuel' | 'expenses' | 'summary'>('fuel');
+  const [activeTab, setActiveTab] = useState<"fuel" | "expenses" | "summary">(
+    "fuel",
+  );
 
   const [fuelLogs, setFuelLogs] = useState<FuelLog[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -33,28 +39,28 @@ export default function FuelExpensesPage() {
     try {
       // 1. Fetch Fuel Logs
       const { data: fuelData } = await supabase
-        .from('fuel_logs')
-        .select('*, vehicles(registration_number, name_model)')
-        .order('log_date', { ascending: false });
+        .from("fuel_logs")
+        .select("*, vehicles(registration_number, name_model)")
+        .order("log_date", { ascending: false });
 
       if (fuelData) setFuelLogs(fuelData as FuelLog[]);
 
       // 2. Fetch Expenses
       const { data: expenseData } = await supabase
-        .from('expenses')
-        .select('*, vehicles(registration_number, name_model)')
-        .order('expense_date', { ascending: false });
+        .from("expenses")
+        .select("*, vehicles(registration_number, name_model)")
+        .order("expense_date", { ascending: false });
 
       if (expenseData) setExpenses(expenseData as Expense[]);
 
       // 3. Fetch View-based operational costs summary
       const { data: summaryData } = await supabase
-        .from('v_vehicle_report')
-        .select('*');
+        .from("v_vehicle_report")
+        .select("*");
 
       if (summaryData) setVehicleSummary(summaryData as VehicleReport[]);
     } catch (err: any) {
-      toast.error('Failed to load logs', { description: err.message });
+      toast.error("Failed to load logs", { description: err.message });
     } finally {
       setLoading(false);
     }
@@ -65,17 +71,29 @@ export default function FuelExpensesPage() {
   }, []);
 
   // Compute overall aggregates
-  const totalFuelCost = fuelLogs.reduce((sum, item) => sum + Number(item.cost), 0);
-  const totalMiscCost = expenses.reduce((sum, item) => sum + Number(item.amount), 0);
-  const totalFuelLiters = fuelLogs.reduce((sum, item) => sum + Number(item.liters), 0);
+  const totalFuelCost = fuelLogs.reduce(
+    (sum, item) => sum + Number(item.cost),
+    0,
+  );
+  const totalMiscCost = expenses.reduce(
+    (sum, item) => sum + Number(item.amount),
+    0,
+  );
+  const totalFuelLiters = fuelLogs.reduce(
+    (sum, item) => sum + Number(item.liters),
+    0,
+  );
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Fuel & Expense Registry</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Fuel & Expense Registry
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Track fuel efficiency, tolls, maintenance costs, and total fleet operational costs.
+            Track fuel efficiency, tolls, maintenance costs, and total fleet
+            operational costs.
           </p>
         </div>
 
@@ -109,8 +127,15 @@ export default function FuelExpensesPage() {
             <Fuel className="size-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Fuel Cost</p>
-            <p className="text-2xl font-bold font-mono">${totalFuelCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Total Fuel Cost
+            </p>
+            <p className="text-2xl font-bold font-mono">
+              $
+              {totalFuelCost.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
+            </p>
           </div>
         </div>
 
@@ -119,8 +144,15 @@ export default function FuelExpensesPage() {
             <Receipt className="size-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tolls & Misc Expenses</p>
-            <p className="text-2xl font-bold font-mono">${totalMiscCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Tolls & Misc Expenses
+            </p>
+            <p className="text-2xl font-bold font-mono">
+              $
+              {totalMiscCost.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
+            </p>
           </div>
         </div>
 
@@ -129,8 +161,12 @@ export default function FuelExpensesPage() {
             <Gauge className="size-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Fuel Liters</p>
-            <p className="text-2xl font-bold font-mono">{totalFuelLiters.toLocaleString()} L</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Total Fuel Liters
+            </p>
+            <p className="text-2xl font-bold font-mono">
+              {totalFuelLiters.toLocaleString()} L
+            </p>
           </div>
         </div>
       </div>
@@ -138,31 +174,31 @@ export default function FuelExpensesPage() {
       {/* Tabs selector */}
       <div className="flex rounded-lg border bg-muted p-0.5 text-sm w-full max-w-sm">
         <button
-          onClick={() => setActiveTab('fuel')}
+          onClick={() => setActiveTab("fuel")}
           className={`flex-1 rounded-md py-1.5 font-medium transition-colors ${
-            activeTab === 'fuel'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground'
+            activeTab === "fuel"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
           }`}
         >
           Fuel Logs
         </button>
         <button
-          onClick={() => setActiveTab('expenses')}
+          onClick={() => setActiveTab("expenses")}
           className={`flex-1 rounded-md py-1.5 font-medium transition-colors ${
-            activeTab === 'expenses'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground'
+            activeTab === "expenses"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
           }`}
         >
           Expenses
         </button>
         <button
-          onClick={() => setActiveTab('summary')}
+          onClick={() => setActiveTab("summary")}
           className={`flex-1 rounded-md py-1.5 font-medium transition-colors ${
-            activeTab === 'summary'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground'
+            activeTab === "summary"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
           }`}
         >
           Cost Summary
@@ -175,7 +211,7 @@ export default function FuelExpensesPage() {
       ) : (
         <>
           {/* Fuel Logs Tab */}
-          {activeTab === 'fuel' &&
+          {activeTab === "fuel" &&
             (fuelLogs.length === 0 ? (
               <EmptyState
                 icon={<Fuel className="size-6" />}
@@ -196,18 +232,27 @@ export default function FuelExpensesPage() {
                   </thead>
                   <tbody className="divide-y">
                     {fuelLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+                      <tr
+                        key={log.id}
+                        className="hover:bg-muted/30 transition-colors"
+                      >
                         <td className="py-3 px-4 font-semibold">
-                          {log.vehicles?.name_model ?? '—'}{' '}
+                          {log.vehicles?.name_model ?? "—"}{" "}
                           <span className="text-xs text-muted-foreground font-normal">
-                            ({log.vehicles?.registration_number ?? '—'})
+                            ({log.vehicles?.registration_number ?? "—"})
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground font-mono">{log.liters} L</td>
-                        <td className="py-3 px-4 font-mono font-semibold">${log.cost}</td>
-                        <td className="py-3 px-4 text-muted-foreground font-mono">{log.log_date}</td>
+                        <td className="py-3 px-4 text-muted-foreground font-mono">
+                          {log.liters} L
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold">
+                          ${log.cost}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground font-mono">
+                          {log.log_date}
+                        </td>
                         <td className="py-3 px-4 font-mono text-xs text-amber-500 font-medium">
-                          {log.trip_id ? 'Trip Mapped' : 'Manual Log'}
+                          {log.trip_id ? "Trip Mapped" : "Manual Log"}
                         </td>
                       </tr>
                     ))}
@@ -217,7 +262,7 @@ export default function FuelExpensesPage() {
             ))}
 
           {/* Expenses Tab */}
-          {activeTab === 'expenses' &&
+          {activeTab === "expenses" &&
             (expenses.length === 0 ? (
               <EmptyState
                 icon={<Receipt className="size-6" />}
@@ -238,21 +283,24 @@ export default function FuelExpensesPage() {
                   </thead>
                   <tbody className="divide-y">
                     {expenses.map((exp) => (
-                      <tr key={exp.id} className="hover:bg-muted/30 transition-colors">
+                      <tr
+                        key={exp.id}
+                        className="hover:bg-muted/30 transition-colors"
+                      >
                         <td className="py-3 px-4 font-semibold">
-                          {exp.vehicles?.name_model ?? '—'}{' '}
+                          {exp.vehicles?.name_model ?? "—"}{" "}
                           <span className="text-xs text-muted-foreground font-normal">
-                            ({exp.vehicles?.registration_number ?? '—'})
+                            ({exp.vehicles?.registration_number ?? "—"})
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           <span
                             className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${
-                              exp.category === 'maintenance'
-                                ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                                : exp.category === 'Toll'
-                                  ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
-                                  : 'bg-zinc-500/15 text-zinc-400 border border-zinc-500/30'
+                              exp.category === "maintenance"
+                                ? "bg-orange-500/15 text-orange-400 border border-orange-500/30"
+                                : exp.category === "Toll"
+                                  ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                                  : "bg-zinc-500/15 text-zinc-400 border border-zinc-500/30"
                             }`}
                           >
                             {exp.category}
@@ -261,9 +309,13 @@ export default function FuelExpensesPage() {
                         <td className="py-3 px-4 font-mono font-semibold text-foreground">
                           ${exp.amount.toLocaleString()}
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground font-mono">{exp.expense_date}</td>
+                        <td className="py-3 px-4 text-muted-foreground font-mono">
+                          {exp.expense_date}
+                        </td>
                         <td className="py-3 px-4 text-xs text-muted-foreground">
-                          {exp.category === 'maintenance' ? 'System Automated' : 'Manual Entry'}
+                          {exp.category === "maintenance"
+                            ? "System Automated"
+                            : "Manual Entry"}
                         </td>
                       </tr>
                     ))}
@@ -273,7 +325,7 @@ export default function FuelExpensesPage() {
             ))}
 
           {/* Cost Summary Tab (View based) */}
-          {activeTab === 'summary' &&
+          {activeTab === "summary" &&
             (vehicleSummary.length === 0 ? (
               <EmptyState
                 icon={<DollarSign className="size-6" />}
@@ -287,17 +339,24 @@ export default function FuelExpensesPage() {
                     <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
                       <th className="pb-3 pt-3 px-4">Vehicle</th>
                       <th className="pb-3 pt-3 px-4 font-mono">Acq. Cost</th>
-                      <th className="pb-3 pt-3 px-4 font-mono">Maintenance Cost</th>
+                      <th className="pb-3 pt-3 px-4 font-mono">
+                        Maintenance Cost
+                      </th>
                       <th className="pb-3 pt-3 px-4 font-mono">Fuel Cost</th>
-                      <th className="pb-3 pt-3 px-4 font-mono">Total Operational Cost</th>
+                      <th className="pb-3 pt-3 px-4 font-mono">
+                        Total Operational Cost
+                      </th>
                       <th className="pb-3 pt-3 px-4 font-mono">ROI</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {vehicleSummary.map((summary) => (
-                      <tr key={summary.vehicle_id} className="hover:bg-muted/30 transition-colors">
+                      <tr
+                        key={summary.vehicle_id}
+                        className="hover:bg-muted/30 transition-colors"
+                      >
                         <td className="py-3 px-4 font-semibold">
-                          {summary.name_model}{' '}
+                          {summary.name_model}{" "}
                           <span className="text-xs text-muted-foreground font-normal">
                             ({summary.registration_number})
                           </span>
@@ -315,7 +374,9 @@ export default function FuelExpensesPage() {
                           ${summary.total_operational_cost.toLocaleString()}
                         </td>
                         <td className="py-3 px-4 font-mono font-bold text-emerald-500">
-                          {summary.roi ? `${(summary.roi * 100).toFixed(2)}%` : '0.00%'}
+                          {summary.roi
+                            ? `${(summary.roi * 100).toFixed(2)}%`
+                            : "0.00%"}
                         </td>
                       </tr>
                     ))}

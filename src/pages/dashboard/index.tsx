@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { DashboardKPIs, Trip } from '@/lib/types';
-import { KPICards } from './kpi-cards';
-import { RecentTrips } from './recent-trips';
-import { VehicleStatusChart } from './vehicle-status-chart';
-import { CardSkeleton } from '@/components/ui/loading-skeleton';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import type { DashboardKPIs, Trip } from "@/lib/types";
+import { KPICards } from "./kpi-cards";
+import { RecentTrips } from "./recent-trips";
+import { VehicleStatusChart } from "./vehicle-status-chart";
+import { CardSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
   const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
-  const [vehicleStatusCounts, setVehicleStatusCounts] = useState<Record<string, number>>({});
+  const [vehicleStatusCounts, setVehicleStatusCounts] = useState<
+    Record<string, number>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,25 +20,25 @@ export default function DashboardPage() {
 
       // Fetch KPIs from view
       const { data: kpiData } = await supabase
-        .from('v_dashboard_kpis')
-        .select('*')
+        .from("v_dashboard_kpis")
+        .select("*")
         .single();
 
       if (kpiData) setKpis(kpiData as DashboardKPIs);
 
       // Fetch recent trips with vehicle/driver info
       const { data: tripData } = await supabase
-        .from('trips')
-        .select('*, vehicles(registration_number, name_model), drivers(name)')
-        .order('created_at', { ascending: false })
+        .from("trips")
+        .select("*, vehicles(registration_number, name_model), drivers(name)")
+        .order("created_at", { ascending: false })
         .limit(5);
 
       if (tripData) setRecentTrips(tripData as Trip[]);
 
       // Fetch vehicle status distribution
       const { data: vehicleData } = await supabase
-        .from('vehicles')
-        .select('status');
+        .from("vehicles")
+        .select("status");
 
       if (vehicleData) {
         const counts: Record<string, number> = {};
@@ -56,7 +58,9 @@ export default function DashboardPage() {
     <div className="space-y-6 p-6">
       {/* Filters row — matching mockup */}
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Filters</span>
+        <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          Filters
+        </span>
         {/* TODO: Wire filter functionality when data views are ready */}
         <select className="h-8 rounded-md border border-input bg-transparent px-3 text-sm">
           <option>Vehicle Type: All</option>

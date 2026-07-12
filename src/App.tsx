@@ -1,22 +1,22 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/context/auth-context';
-import { ThemeProvider } from '@/context/theme-context';
-import { Toaster } from '@/components/ui/sonner';
-import { ProtectedRoute } from '@/components/layout/protected-route';
-import { AppLayout } from '@/components/layout/app-layout';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/context/auth-context";
+import { ThemeProvider } from "@/context/theme-context";
+import { Toaster } from "@/components/ui/sonner";
+import { ProtectedRoute } from "@/components/layout/protected-route";
+import { AppLayout } from "@/components/layout/app-layout";
 
 // Auth pages
-import LoginPage from '@/pages/auth/login';
-import SignupPage from '@/pages/auth/signup';
+import LoginPage from "@/pages/auth/login";
+import SignupPage from "@/pages/auth/signup";
 
 // App pages
-import DashboardPage from '@/pages/dashboard';
-import VehiclesPage from '@/pages/vehicles';
-import DriversPage from '@/pages/drivers';
-import TripsPage from '@/pages/trips';
-import MaintenancePage from '@/pages/maintenance';
-import FuelExpensesPage from '@/pages/fuel-expenses';
-import ReportsPage from '@/pages/reports';
+import DashboardPage from "@/pages/dashboard";
+import VehiclesPage from "@/pages/vehicles";
+import DriversPage from "@/pages/drivers";
+import TripsPage from "@/pages/trips";
+import MaintenancePage from "@/pages/maintenance";
+import FuelExpensesPage from "@/pages/fuel-expenses";
+import ReportsPage from "@/pages/reports";
 
 export default function App() {
   return (

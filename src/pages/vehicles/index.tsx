@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { Vehicle } from '@/lib/types';
-import { useAuth } from '@/context/auth-context';
-import { canWrite } from '@/lib/permissions';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { EmptyState } from '@/components/ui/empty-state';
-import { TableSkeleton } from '@/components/ui/loading-skeleton';
-import { VehicleDialog } from './vehicle-dialog';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import type { Vehicle } from "@/lib/types";
+import { useAuth } from "@/context/auth-context";
+import { canWrite } from "@/lib/permissions";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import { VehicleDialog } from "./vehicle-dialog";
+import { toast } from "sonner";
 import {
   Search,
   Plus,
@@ -16,28 +16,36 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-type SortKey = 'registration_number' | 'name_model' | 'type' | 'max_load_capacity' | 'odometer' | 'acquisition_cost' | 'status' | 'region';
-type SortOrder = 'asc' | 'desc';
+type SortKey =
+  | "registration_number"
+  | "name_model"
+  | "type"
+  | "max_load_capacity"
+  | "odometer"
+  | "acquisition_cost"
+  | "status"
+  | "region";
+type SortOrder = "asc" | "desc";
 
 export default function VehiclesPage() {
   const { role } = useAuth();
-  const isManager = role && canWrite(role, 'vehicles');
+  const isManager = role && canWrite(role, "vehicles");
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Search & Filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [regionFilter, setRegionFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
 
   // Sorting state
-  const [sortKey, setSortKey] = useState<SortKey>('registration_number');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>("registration_number");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,12 +57,10 @@ export default function VehiclesPage() {
 
   const fetchVehicles = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*');
+    const { data, error } = await supabase.from("vehicles").select("*");
 
     if (error) {
-      toast.error('Failed to load vehicles', { description: error.message });
+      toast.error("Failed to load vehicles", { description: error.message });
       setLoading(false);
       return;
     }
@@ -64,8 +70,12 @@ export default function VehiclesPage() {
       setVehicles(vData);
 
       // Extract unique types and regions for filters
-      const types = Array.from(new Set(vData.map((v) => v.type).filter(Boolean))) as string[];
-      const regions = Array.from(new Set(vData.map((v) => v.region).filter(Boolean))) as string[];
+      const types = Array.from(
+        new Set(vData.map((v) => v.type).filter(Boolean)),
+      ) as string[];
+      const regions = Array.from(
+        new Set(vData.map((v) => v.region).filter(Boolean)),
+      ) as string[];
       setTypesList(types);
       setRegionsList(regions);
     }
@@ -90,33 +100,33 @@ export default function VehiclesPage() {
     if (!isManager) return;
 
     const confirmed = window.confirm(
-      `Are you sure you want to permanently delete vehicle ${vehicle.registration_number}? Alternatively, you can edit it and set its status to "Retired".`
+      `Are you sure you want to permanently delete vehicle ${vehicle.registration_number}? Alternatively, you can edit it and set its status to "Retired".`,
     );
 
     if (!confirmed) return;
 
     const { error } = await supabase
-      .from('vehicles')
+      .from("vehicles")
       .delete()
-      .eq('id', vehicle.id);
+      .eq("id", vehicle.id);
 
     if (error) {
-      toast.error('Failed to delete vehicle', {
+      toast.error("Failed to delete vehicle", {
         description: error.message,
       });
       return;
     }
 
-    toast.success('Vehicle deleted successfully');
+    toast.success("Vehicle deleted successfully");
     fetchVehicles();
   };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
@@ -124,38 +134,40 @@ export default function VehiclesPage() {
   const filteredVehicles = vehicles
     .filter((v) => {
       const matchesSearch =
-        v.registration_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.registration_number
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         v.name_model.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatus = statusFilter === 'all' || v.status === statusFilter;
-      const matchesType = typeFilter === 'all' || v.type === typeFilter;
+      const matchesStatus = statusFilter === "all" || v.status === statusFilter;
+      const matchesType = typeFilter === "all" || v.type === typeFilter;
       const matchesRegion =
-        regionFilter === 'all' ||
-        (regionFilter === 'empty' && !v.region) ||
+        regionFilter === "all" ||
+        (regionFilter === "empty" && !v.region) ||
         v.region === regionFilter;
 
       return matchesSearch && matchesStatus && matchesType && matchesRegion;
     })
     .sort((a, b) => {
-      let aValue = a[sortKey] ?? '';
-      let bValue = b[sortKey] ?? '';
+      let aValue = a[sortKey] ?? "";
+      let bValue = b[sortKey] ?? "";
 
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
       }
 
       const aString = String(aValue).toLowerCase();
       const bString = String(bValue).toLowerCase();
 
-      if (aString < bString) return sortOrder === 'asc' ? -1 : 1;
-      if (aString > bString) return sortOrder === 'asc' ? 1 : -1;
+      if (aString < bString) return sortOrder === "asc" ? -1 : 1;
+      if (aString > bString) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
   // Sort indicator icon
   const renderSortIcon = (key: SortKey) => {
     if (sortKey !== key) return null;
-    return sortOrder === 'asc' ? (
+    return sortOrder === "asc" ? (
       <ChevronUp className="inline size-3.5 ml-1" />
     ) : (
       <ChevronDown className="inline size-3.5 ml-1" />
@@ -166,14 +178,20 @@ export default function VehiclesPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vehicle Registry</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Vehicle Registry
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Manage fleet vehicles, tracking lifecycle, status, and registration documents.
+            Manage fleet vehicles, tracking lifecycle, status, and registration
+            documents.
           </p>
         </div>
 
         {isManager && (
-          <Button onClick={handleCreate} className="flex items-center gap-1.5 self-start">
+          <Button
+            onClick={handleCreate}
+            className="flex items-center gap-1.5 self-start"
+          >
             <Plus className="size-4" />
             Add Vehicle
           </Button>
@@ -239,15 +257,18 @@ export default function VehiclesPage() {
         </div>
 
         {/* Filters Clear / Indicator */}
-        {(searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || regionFilter !== 'all') && (
+        {(searchQuery ||
+          statusFilter !== "all" ||
+          typeFilter !== "all" ||
+          regionFilter !== "all") && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              setSearchQuery('');
-              setStatusFilter('all');
-              setTypeFilter('all');
-              setRegionFilter('all');
+              setSearchQuery("");
+              setStatusFilter("all");
+              setTypeFilter("all");
+              setRegionFilter("all");
             }}
             className="text-xs text-amber-500 hover:text-amber-400 self-start"
           >
@@ -263,9 +284,12 @@ export default function VehiclesPage() {
         <EmptyState
           title="No vehicles found"
           description={
-            searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || regionFilter !== 'all'
-              ? 'Try modifying your search or filter options'
-              : 'Start by registering your first vehicle'
+            searchQuery ||
+            statusFilter !== "all" ||
+            typeFilter !== "all" ||
+            regionFilter !== "all"
+              ? "Try modifying your search or filter options"
+              : "Start by registering your first vehicle"
           }
           action={
             isManager && !searchQuery ? (
@@ -283,62 +307,71 @@ export default function VehiclesPage() {
               <thead>
                 <tr className="border-b text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/20">
                   <th
-                    onClick={() => handleSort('registration_number')}
+                    onClick={() => handleSort("registration_number")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Reg. No {renderSortIcon('registration_number')}
+                    Reg. No {renderSortIcon("registration_number")}
                   </th>
                   <th
-                    onClick={() => handleSort('name_model')}
+                    onClick={() => handleSort("name_model")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Name/Model {renderSortIcon('name_model')}
+                    Name/Model {renderSortIcon("name_model")}
                   </th>
                   <th
-                    onClick={() => handleSort('type')}
+                    onClick={() => handleSort("type")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Type {renderSortIcon('type')}
+                    Type {renderSortIcon("type")}
                   </th>
                   <th
-                    onClick={() => handleSort('max_load_capacity')}
+                    onClick={() => handleSort("max_load_capacity")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Capacity {renderSortIcon('max_load_capacity')}
+                    Capacity {renderSortIcon("max_load_capacity")}
                   </th>
                   <th
-                    onClick={() => handleSort('odometer')}
+                    onClick={() => handleSort("odometer")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Odometer {renderSortIcon('odometer')}
+                    Odometer {renderSortIcon("odometer")}
                   </th>
                   <th
-                    onClick={() => handleSort('acquisition_cost')}
+                    onClick={() => handleSort("acquisition_cost")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Acq. Cost {renderSortIcon('acquisition_cost')}
+                    Acq. Cost {renderSortIcon("acquisition_cost")}
                   </th>
                   <th
-                    onClick={() => handleSort('region')}
+                    onClick={() => handleSort("region")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Region {renderSortIcon('region')}
+                    Region {renderSortIcon("region")}
                   </th>
                   <th
-                    onClick={() => handleSort('status')}
+                    onClick={() => handleSort("status")}
                     className="pb-3 pt-3 px-4 cursor-pointer select-none hover:text-foreground"
                   >
-                    Status {renderSortIcon('status')}
+                    Status {renderSortIcon("status")}
                   </th>
                   <th className="pb-3 pt-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filteredVehicles.map((v) => (
-                  <tr key={v.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4 font-semibold">{v.registration_number}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{v.name_model}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{v.type}</td>
+                  <tr
+                    key={v.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-semibold">
+                      {v.registration_number}
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      {v.name_model}
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      {v.type}
+                    </td>
                     <td className="py-3 px-4 text-muted-foreground font-mono">
                       {v.max_load_capacity.toLocaleString()} kg
                     </td>
@@ -348,7 +381,9 @@ export default function VehiclesPage() {
                     <td className="py-3 px-4 text-muted-foreground font-mono">
                       ${v.acquisition_cost.toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">{v.region || '—'}</td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      {v.region || "—"}
+                    </td>
                     <td className="py-3 px-4">
                       <StatusBadge status={v.status} />
                     </td>
@@ -394,7 +429,10 @@ export default function VehiclesPage() {
           {/* Mobile Card Grid View */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredVehicles.map((v) => (
-              <div key={v.id} className="rounded-xl border bg-card p-4 space-y-3">
+              <div
+                key={v.id}
+                className="rounded-xl border bg-card p-4 space-y-3"
+              >
                 <div className="flex items-start justify-between border-b pb-2">
                   <div>
                     <h3 className="font-bold text-base leading-none">
@@ -409,20 +447,26 @@ export default function VehiclesPage() {
 
                 <div className="grid grid-cols-2 gap-y-2 text-xs">
                   <div>
-                    <span className="text-muted-foreground">Capacity:</span>{' '}
-                    <span className="font-medium font-mono">{v.max_load_capacity} kg</span>
+                    <span className="text-muted-foreground">Capacity:</span>{" "}
+                    <span className="font-medium font-mono">
+                      {v.max_load_capacity} kg
+                    </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Odometer:</span>{' '}
-                    <span className="font-medium font-mono">{v.odometer} km</span>
+                    <span className="text-muted-foreground">Odometer:</span>{" "}
+                    <span className="font-medium font-mono">
+                      {v.odometer} km
+                    </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Acq. Cost:</span>{' '}
-                    <span className="font-medium font-mono">${v.acquisition_cost}</span>
+                    <span className="text-muted-foreground">Acq. Cost:</span>{" "}
+                    <span className="font-medium font-mono">
+                      ${v.acquisition_cost}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Region:</span>{' '}
-                    <span className="font-medium">{v.region || '—'}</span>
+                    <span className="text-muted-foreground">Region:</span>{" "}
+                    <span className="font-medium">{v.region || "—"}</span>
                   </div>
                 </div>
 
@@ -441,7 +485,11 @@ export default function VehiclesPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(v)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(v)}
+                    >
                       Edit
                     </Button>
                     {isManager && (

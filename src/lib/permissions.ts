@@ -1,31 +1,39 @@
-import type { UserRole } from './types';
+import type { UserRole } from "./types";
 
 // Navigation items available in the sidebar
 export type NavItem =
-  | 'dashboard'
-  | 'vehicles'
-  | 'drivers'
-  | 'trips'
-  | 'maintenance'
-  | 'fuel-expenses'
-  | 'reports';
+  | "dashboard"
+  | "vehicles"
+  | "drivers"
+  | "trips"
+  | "maintenance"
+  | "fuel-expenses"
+  | "reports";
 
 // Which nav items each role can see — derived from PRD Section 2 + schema RLS
 const ROLE_NAV_MAP: Record<UserRole, NavItem[]> = {
-  fleet_manager: ['dashboard', 'vehicles', 'drivers', 'trips', 'maintenance', 'fuel-expenses', 'reports'],
-  driver: ['dashboard', 'trips', 'fuel-expenses'],
-  safety_officer: ['dashboard', 'drivers'],
-  financial_analyst: ['dashboard', 'fuel-expenses', 'reports'],
+  fleet_manager: [
+    "dashboard",
+    "vehicles",
+    "drivers",
+    "trips",
+    "maintenance",
+    "fuel-expenses",
+    "reports",
+  ],
+  driver: ["dashboard", "trips", "fuel-expenses"],
+  safety_officer: ["dashboard", "drivers"],
+  financial_analyst: ["dashboard", "fuel-expenses", "reports"],
 };
 
 // Write permissions per resource, matching schema RLS policies
 const ROLE_WRITE_MAP: Record<string, UserRole[]> = {
-  vehicles: ['fleet_manager'],
-  drivers: ['fleet_manager', 'safety_officer'],
-  trips: ['driver', 'fleet_manager'],
-  maintenance: ['fleet_manager'],
-  fuel_logs: ['fleet_manager', 'driver'],
-  expenses: ['fleet_manager', 'driver'],
+  vehicles: ["fleet_manager"],
+  drivers: ["fleet_manager", "safety_officer"],
+  trips: ["driver", "fleet_manager"],
+  maintenance: ["fleet_manager"],
+  fuel_logs: ["fleet_manager", "driver"],
+  expenses: ["fleet_manager", "driver"],
 };
 
 /**
@@ -53,21 +61,21 @@ export function canWrite(role: UserRole, resource: string): boolean {
  * Human-readable labels for nav items
  */
 export const NAV_LABELS: Record<NavItem, string> = {
-  dashboard: 'Dashboard',
-  vehicles: 'Fleet',
-  drivers: 'Drivers',
-  trips: 'Trips',
-  maintenance: 'Maintenance',
-  'fuel-expenses': 'Fuel & Expenses',
-  reports: 'Analytics',
+  dashboard: "Dashboard",
+  vehicles: "Fleet",
+  drivers: "Drivers",
+  trips: "Trips",
+  maintenance: "Maintenance",
+  "fuel-expenses": "Fuel & Expenses",
+  reports: "Analytics",
 };
 
 /**
  * Human-readable role labels
  */
 export const ROLE_LABELS: Record<UserRole, string> = {
-  fleet_manager: 'Fleet Manager',
-  driver: 'Dispatcher',
-  safety_officer: 'Safety Officer',
-  financial_analyst: 'Financial Analyst',
+  fleet_manager: "Fleet Manager",
+  driver: "Dispatcher",
+  safety_officer: "Safety Officer",
+  financial_analyst: "Financial Analyst",
 };

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 /**
  * Uploads a file to Supabase Storage in the specified bucket
@@ -9,14 +9,14 @@ import { supabase } from './supabase';
 export async function uploadFile(
   bucket: string,
   path: string,
-  file: File
+  file: File,
 ): Promise<{ url: string | null; error: string | null }> {
   try {
     // Attempt to upload the file
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
-        cacheControl: '3600',
+        cacheControl: "3600",
         upsert: true,
       });
 
@@ -32,6 +32,9 @@ export async function uploadFile(
 
     return { url: publicUrlData.publicUrl, error: null };
   } catch (err: any) {
-    return { url: null, error: err.message || 'An unknown error occurred during upload' };
+    return {
+      url: null,
+      error: err.message || "An unknown error occurred during upload",
+    };
   }
 }

@@ -1,4 +1,4 @@
-import type { DashboardKPIs } from '@/lib/types';
+import type { DashboardKPIs } from "@/lib/types";
 import {
   Truck,
   CheckCircle,
@@ -7,8 +7,8 @@ import {
   Clock,
   Users,
   Gauge,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface KPICardData {
   label: string;
@@ -20,47 +20,47 @@ interface KPICardData {
 
 const KPI_CONFIG: KPICardData[] = [
   {
-    label: 'ACTIVE VEHICLES',
-    key: 'vehicles_active',
+    label: "ACTIVE VEHICLES",
+    key: "vehicles_active",
     icon: Truck,
-    color: 'text-blue-400',
+    color: "text-blue-400",
   },
   {
-    label: 'AVAILABLE VEHICLES',
-    key: 'vehicles_available',
+    label: "AVAILABLE VEHICLES",
+    key: "vehicles_available",
     icon: CheckCircle,
-    color: 'text-emerald-400',
+    color: "text-emerald-400",
   },
   {
-    label: 'VEHICLES IN MAINTENANCE',
-    key: 'vehicles_in_maintenance',
+    label: "VEHICLES IN MAINTENANCE",
+    key: "vehicles_in_maintenance",
     icon: Wrench,
-    color: 'text-orange-400',
+    color: "text-orange-400",
   },
   {
-    label: 'ACTIVE TRIPS',
-    key: 'trips_active',
+    label: "ACTIVE TRIPS",
+    key: "trips_active",
     icon: Route,
-    color: 'text-blue-400',
+    color: "text-blue-400",
   },
   {
-    label: 'PENDING TRIPS',
-    key: 'trips_pending',
+    label: "PENDING TRIPS",
+    key: "trips_pending",
     icon: Clock,
-    color: 'text-yellow-400',
+    color: "text-yellow-400",
   },
   {
-    label: 'DRIVERS ON DUTY',
-    key: 'drivers_on_duty',
+    label: "DRIVERS ON DUTY",
+    key: "drivers_on_duty",
     icon: Users,
-    color: 'text-blue-400',
+    color: "text-blue-400",
   },
   {
-    label: 'FLEET UTILIZATION',
-    key: 'fleet_utilization_pct',
+    label: "FLEET UTILIZATION",
+    key: "fleet_utilization_pct",
     icon: Gauge,
-    suffix: '%',
-    color: 'text-emerald-400',
+    suffix: "%",
+    color: "text-emerald-400",
   },
 ];
 
@@ -76,8 +76,8 @@ export function KPICards({ kpis }: KPICardsProps) {
         const value = kpis[cfg.key];
         const displayValue =
           value === null || value === undefined
-            ? '—'
-            : `${value}${cfg.suffix ?? ''}`;
+            ? "—"
+            : `${value}${cfg.suffix ?? ""}`;
 
         return (
           <div
@@ -90,9 +90,7 @@ export function KPICards({ kpis }: KPICardsProps) {
                 {cfg.label}
               </span>
             </div>
-            <p className="text-2xl font-bold tabular-nums">
-              {displayValue}
-            </p>
+            <p className="text-2xl font-bold tabular-nums">{displayValue}</p>
           </div>
         );
       })}

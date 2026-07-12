@@ -1,13 +1,13 @@
-import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
-import { supabase } from '@/lib/supabase';
-import { uploadFile } from '@/lib/storage';
-import type { Vehicle, VehicleStatus } from '@/lib/types';
-import { useAuth } from '@/context/auth-context';
-import { canWrite } from '@/lib/permissions';
-import { toast } from 'sonner';
-import { FileUp, FileText, Loader2, X, Wrench } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
+import { supabase } from "@/lib/supabase";
+import { uploadFile } from "@/lib/storage";
+import type { Vehicle, VehicleStatus } from "@/lib/types";
+import { useAuth } from "@/context/auth-context";
+import { canWrite } from "@/lib/permissions";
+import { toast } from "sonner";
+import { FileUp, FileText, Loader2, X, Wrench } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 interface VehicleDialogProps {
   open: boolean;
@@ -24,19 +24,24 @@ interface VehicleDialogProps {
   onSuccess: () => void;
 }
 
-export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: VehicleDialogProps) {
+export function VehicleDialog({
+  open,
+  onOpenChange,
+  vehicle,
+  onSuccess,
+}: VehicleDialogProps) {
   const { role } = useAuth();
-  const isManager = role && canWrite(role, 'vehicles');
+  const isManager = role && canWrite(role, "vehicles");
 
-  const [regNumber, setRegNumber] = useState('');
-  const [nameModel, setNameModel] = useState('');
-  const [type, setType] = useState('Truck');
-  const [maxLoadCapacity, setMaxLoadCapacity] = useState('');
-  const [odometer, setOdometer] = useState('0');
-  const [acquisitionCost, setAcquisitionCost] = useState('');
-  const [region, setRegion] = useState('');
-  const [status, setStatus] = useState<VehicleStatus>('Available');
-  const [documentUrl, setDocumentUrl] = useState('');
+  const [regNumber, setRegNumber] = useState("");
+  const [nameModel, setNameModel] = useState("");
+  const [type, setType] = useState("Truck");
+  const [maxLoadCapacity, setMaxLoadCapacity] = useState("");
+  const [odometer, setOdometer] = useState("0");
+  const [acquisitionCost, setAcquisitionCost] = useState("");
+  const [region, setRegion] = useState("");
+  const [status, setStatus] = useState<VehicleStatus>("Available");
+  const [documentUrl, setDocumentUrl] = useState("");
   const [maintenanceLogs, setMaintenanceLogs] = useState<any[]>([]);
 
   const [saving, setSaving] = useState(false);
@@ -51,29 +56,29 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
       setMaxLoadCapacity(String(vehicle.max_load_capacity));
       setOdometer(String(vehicle.odometer));
       setAcquisitionCost(String(vehicle.acquisition_cost));
-      setRegion(vehicle.region || '');
+      setRegion(vehicle.region || "");
       setStatus(vehicle.status);
-      setDocumentUrl(vehicle.document_url || '');
+      setDocumentUrl(vehicle.document_url || "");
 
       // Fetch maintenance history
       supabase
-        .from('maintenance_logs')
-        .select('*')
-        .eq('vehicle_id', vehicle.id)
-        .order('opened_at', { ascending: false })
+        .from("maintenance_logs")
+        .select("*")
+        .eq("vehicle_id", vehicle.id)
+        .order("opened_at", { ascending: false })
         .then(({ data }) => {
           if (data) setMaintenanceLogs(data);
         });
     } else {
-      setRegNumber('');
-      setNameModel('');
-      setType('Truck');
-      setMaxLoadCapacity('');
-      setOdometer('0');
-      setAcquisitionCost('');
-      setRegion('');
-      setStatus('Available');
-      setDocumentUrl('');
+      setRegNumber("");
+      setNameModel("");
+      setType("Truck");
+      setMaxLoadCapacity("");
+      setOdometer("0");
+      setAcquisitionCost("");
+      setRegion("");
+      setStatus("Available");
+      setDocumentUrl("");
       setMaintenanceLogs([]);
     }
     setErrors({});
@@ -84,31 +89,38 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
     if (!file) return;
 
     if (!regNumber.trim()) {
-      toast.error('Please enter a Registration Number first to name the document file');
+      toast.error(
+        "Please enter a Registration Number first to name the document file",
+      );
       return;
     }
 
     setUploading(true);
-    const extension = file.name.split('.').pop() || '';
-    const cleanReg = regNumber.trim().replace(/[^a-zA-Z0-9]/g, '-');
+    const extension = file.name.split(".").pop() || "";
+    const cleanReg = regNumber.trim().replace(/[^a-zA-Z0-9]/g, "-");
     const path = `vehicles/${cleanReg}-${Date.now()}.${extension}`;
 
-    const { url, error } = await uploadFile('vehicle-documents', path, file);
+    const { url, error } = await uploadFile("vehicle-documents", path, file);
 
     setUploading(false);
 
     if (error) {
       // Storage upload fails often if bucket doesn't exist, we can fallback to standard mock URL
-      console.warn('Storage upload error, using local mock file reference:', error);
+      console.warn(
+        "Storage upload error, using local mock file reference:",
+        error,
+      );
       // Let's use a mock link representing the document local name
       setDocumentUrl(`file://mock-storage/${cleanReg}-${file.name}`);
-      toast.info('Local document reference saved successfully (Storage bucket bypassed)');
+      toast.info(
+        "Local document reference saved successfully (Storage bucket bypassed)",
+      );
       return;
     }
 
     if (url) {
       setDocumentUrl(url);
-      toast.success('Document uploaded successfully');
+      toast.success("Document uploaded successfully");
     }
   }
 
@@ -120,23 +132,25 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
     }
 
     const newErrors: Record<string, string> = {};
-    if (!regNumber.trim()) newErrors.regNumber = 'Registration Number is required';
-    if (!nameModel.trim()) newErrors.nameModel = 'Vehicle Name/Model is required';
-    if (!type.trim()) newErrors.type = 'Vehicle Type is required';
+    if (!regNumber.trim())
+      newErrors.regNumber = "Registration Number is required";
+    if (!nameModel.trim())
+      newErrors.nameModel = "Vehicle Name/Model is required";
+    if (!type.trim()) newErrors.type = "Vehicle Type is required";
 
     const cap = parseFloat(maxLoadCapacity);
     if (isNaN(cap) || cap < 0) {
-      newErrors.maxLoadCapacity = 'Max Load Capacity must be a positive number';
+      newErrors.maxLoadCapacity = "Max Load Capacity must be a positive number";
     }
 
     const odo = parseFloat(odometer);
     if (isNaN(odo) || odo < 0) {
-      newErrors.odometer = 'Odometer must be a positive number';
+      newErrors.odometer = "Odometer must be a positive number";
     }
 
     const cost = parseFloat(acquisitionCost);
     if (isNaN(cost) || cost < 0) {
-      newErrors.acquisitionCost = 'Acquisition Cost must be a positive number';
+      newErrors.acquisitionCost = "Acquisition Cost must be a positive number";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -162,42 +176,40 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
     if (vehicle) {
       // Update
       const { error } = await supabase
-        .from('vehicles')
+        .from("vehicles")
         .update(vehicleData)
-        .eq('id', vehicle.id);
+        .eq("id", vehicle.id);
 
       setSaving(false);
 
       if (error) {
-        if (error.code === '23505') {
-          toast.error('Registration number already exists');
-          setErrors({ regNumber: 'Registration number already exists' });
+        if (error.code === "23505") {
+          toast.error("Registration number already exists");
+          setErrors({ regNumber: "Registration number already exists" });
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      toast.success('Vehicle updated successfully');
+      toast.success("Vehicle updated successfully");
     } else {
       // Create
-      const { error } = await supabase
-        .from('vehicles')
-        .insert([vehicleData]);
+      const { error } = await supabase.from("vehicles").insert([vehicleData]);
 
       setSaving(false);
 
       if (error) {
-        if (error.code === '23505') {
-          toast.error('Registration number already exists');
-          setErrors({ regNumber: 'Registration number already exists' });
+        if (error.code === "23505") {
+          toast.error("Registration number already exists");
+          setErrors({ regNumber: "Registration number already exists" });
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      toast.success('Vehicle registered successfully');
+      toast.success("Vehicle registered successfully");
     }
 
     onSuccess();
@@ -208,11 +220,13 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px] md:max-w-[620px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{vehicle ? 'Edit Vehicle' : 'Register Vehicle'}</DialogTitle>
+          <DialogTitle>
+            {vehicle ? "Edit Vehicle" : "Register Vehicle"}
+          </DialogTitle>
           <DialogDescription>
             {vehicle
-              ? 'Update the details for this vehicle'
-              : 'Add a new vehicle to the transport fleet registry'}
+              ? "Update the details for this vehicle"
+              : "Add a new vehicle to the transport fleet registry"}
           </DialogDescription>
         </DialogHeader>
 
@@ -229,10 +243,12 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                 value={regNumber}
                 onChange={(e) => setRegNumber(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.regNumber ? 'border-destructive' : 'border-input'
+                  errors.regNumber ? "border-destructive" : "border-input"
                 }`}
               />
-              {errors.regNumber && <p className="text-xs text-destructive">{errors.regNumber}</p>}
+              {errors.regNumber && (
+                <p className="text-xs text-destructive">{errors.regNumber}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -246,10 +262,12 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                 value={nameModel}
                 onChange={(e) => setNameModel(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.nameModel ? 'border-destructive' : 'border-input'
+                  errors.nameModel ? "border-destructive" : "border-input"
                 }`}
               />
-              {errors.nameModel && <p className="text-xs text-destructive">{errors.nameModel}</p>}
+              {errors.nameModel && (
+                <p className="text-xs text-destructive">{errors.nameModel}</p>
+              )}
             </div>
           </div>
 
@@ -299,11 +317,13 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                 value={maxLoadCapacity}
                 onChange={(e) => setMaxLoadCapacity(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.maxLoadCapacity ? 'border-destructive' : 'border-input'
+                  errors.maxLoadCapacity ? "border-destructive" : "border-input"
                 }`}
               />
               {errors.maxLoadCapacity && (
-                <p className="text-[10px] text-destructive leading-tight">{errors.maxLoadCapacity}</p>
+                <p className="text-[10px] text-destructive leading-tight">
+                  {errors.maxLoadCapacity}
+                </p>
               )}
             </div>
 
@@ -318,11 +338,13 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                 value={odometer}
                 onChange={(e) => setOdometer(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.odometer ? 'border-destructive' : 'border-input'
+                  errors.odometer ? "border-destructive" : "border-input"
                 }`}
               />
               {errors.odometer && (
-                <p className="text-[10px] text-destructive leading-tight">{errors.odometer}</p>
+                <p className="text-[10px] text-destructive leading-tight">
+                  {errors.odometer}
+                </p>
               )}
             </div>
 
@@ -337,11 +359,13 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                 value={acquisitionCost}
                 onChange={(e) => setAcquisitionCost(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.acquisitionCost ? 'border-destructive' : 'border-input'
+                  errors.acquisitionCost ? "border-destructive" : "border-input"
                 }`}
               />
               {errors.acquisitionCost && (
-                <p className="text-[10px] text-destructive leading-tight">{errors.acquisitionCost}</p>
+                <p className="text-[10px] text-destructive leading-tight">
+                  {errors.acquisitionCost}
+                </p>
               )}
             </div>
           </div>
@@ -382,7 +406,7 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                   {isManager && (
                     <button
                       type="button"
-                      onClick={() => setDocumentUrl('')}
+                      onClick={() => setDocumentUrl("")}
                       className="text-muted-foreground hover:text-foreground"
                     >
                       <X className="size-3.5" />
@@ -409,7 +433,7 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
                     ) : (
                       <FileUp className="size-3.5" />
                     )}
-                    {uploading ? 'Uploading...' : 'Upload Doc'}
+                    {uploading ? "Uploading..." : "Upload Doc"}
                   </Button>
                 </div>
               )}
@@ -425,20 +449,30 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
               </h4>
 
               {maintenanceLogs.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No maintenance records logged for this vehicle.</p>
+                <p className="text-xs text-muted-foreground italic">
+                  No maintenance records logged for this vehicle.
+                </p>
               ) : (
                 <div className="max-h-[160px] overflow-y-auto border rounded-lg divide-y bg-muted/10">
                   {maintenanceLogs.map((log) => (
-                    <div key={log.id} className="p-2.5 flex items-center justify-between text-xs hover:bg-muted/30 transition-colors">
+                    <div
+                      key={log.id}
+                      className="p-2.5 flex items-center justify-between text-xs hover:bg-muted/30 transition-colors"
+                    >
                       <div className="space-y-1 pr-3">
-                        <p className="font-medium text-foreground">{log.description}</p>
+                        <p className="font-medium text-foreground">
+                          {log.description}
+                        </p>
                         <p className="text-[10px] text-muted-foreground">
                           Opened: {new Date(log.opened_at).toLocaleDateString()}
-                          {log.closed_at && ` · Closed: ${new Date(log.closed_at).toLocaleDateString()}`}
+                          {log.closed_at &&
+                            ` · Closed: ${new Date(log.closed_at).toLocaleDateString()}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="font-semibold font-mono text-foreground">${log.cost}</span>
+                        <span className="font-semibold font-mono text-foreground">
+                          ${log.cost}
+                        </span>
                         <StatusBadge status={log.status} />
                       </div>
                     </div>
@@ -460,7 +494,7 @@ export function VehicleDialog({ open, onOpenChange, vehicle, onSuccess }: Vehicl
             {isManager && (
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {vehicle ? 'Save Changes' : 'Register Vehicle'}
+                {vehicle ? "Save Changes" : "Register Vehicle"}
               </Button>
             )}
           </DialogFooter>

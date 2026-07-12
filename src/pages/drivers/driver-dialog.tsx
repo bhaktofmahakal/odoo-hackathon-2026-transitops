@@ -1,11 +1,11 @@
-import { useState, useEffect, type FormEvent } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { Driver, DriverStatus } from '@/lib/types';
-import { useAuth } from '@/context/auth-context';
-import { canWrite } from '@/lib/permissions';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, type FormEvent } from "react";
+import { supabase } from "@/lib/supabase";
+import type { Driver, DriverStatus } from "@/lib/types";
+import { useAuth } from "@/context/auth-context";
+import { canWrite } from "@/lib/permissions";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 interface DriverDialogProps {
   open: boolean;
@@ -22,18 +22,24 @@ interface DriverDialogProps {
   onSuccess: () => void;
 }
 
-export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDialogProps) {
+export function DriverDialog({
+  open,
+  onOpenChange,
+  driver,
+  onSuccess,
+}: DriverDialogProps) {
   const { role } = useAuth();
   // fleet_manager and safety_officer can write/update drivers
-  const canEditDrivers = role && (canWrite(role, 'drivers') || role === 'safety_officer');
+  const canEditDrivers =
+    role && (canWrite(role, "drivers") || role === "safety_officer");
 
-  const [name, setName] = useState('');
-  const [licenseNumber, setLicenseNumber] = useState('');
-  const [licenseCategory, setLicenseCategory] = useState('LMV');
-  const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [safetyScore, setSafetyScore] = useState('100');
-  const [status, setStatus] = useState<DriverStatus>('Available');
+  const [name, setName] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const [licenseCategory, setLicenseCategory] = useState("LMV");
+  const [licenseExpiryDate, setLicenseExpiryDate] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [safetyScore, setSafetyScore] = useState("100");
+  const [status, setStatus] = useState<DriverStatus>("Available");
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,20 +50,20 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
       setLicenseNumber(driver.license_number);
       setLicenseCategory(driver.license_category);
       setLicenseExpiryDate(driver.license_expiry_date);
-      setContactNumber(driver.contact_number || '');
+      setContactNumber(driver.contact_number || "");
       setSafetyScore(String(driver.safety_score));
       setStatus(driver.status);
     } else {
-      setName('');
-      setLicenseNumber('');
-      setLicenseCategory('LMV');
+      setName("");
+      setLicenseNumber("");
+      setLicenseCategory("LMV");
       // Default to 1 year from now
       const nextYear = new Date();
       nextYear.setFullYear(nextYear.getFullYear() + 1);
-      setLicenseExpiryDate(nextYear.toISOString().split('T')[0]);
-      setContactNumber('');
-      setSafetyScore('100');
-      setStatus('Available');
+      setLicenseExpiryDate(nextYear.toISOString().split("T")[0]);
+      setContactNumber("");
+      setSafetyScore("100");
+      setStatus("Available");
     }
     setErrors({});
   }, [driver, open]);
@@ -70,15 +76,18 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
     }
 
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = 'Driver Name is required';
-    if (!licenseNumber.trim()) newErrors.licenseNumber = 'License Number is required';
-    if (!licenseCategory.trim()) newErrors.licenseCategory = 'License Category is required';
-    if (!licenseExpiryDate) newErrors.licenseExpiryDate = 'License Expiry Date is required';
+    if (!name.trim()) newErrors.name = "Driver Name is required";
+    if (!licenseNumber.trim())
+      newErrors.licenseNumber = "License Number is required";
+    if (!licenseCategory.trim())
+      newErrors.licenseCategory = "License Category is required";
+    if (!licenseExpiryDate)
+      newErrors.licenseExpiryDate = "License Expiry Date is required";
 
     // Parse safety score
     const score = parseFloat(safetyScore);
     if (isNaN(score) || score < 0 || score > 100) {
-      newErrors.safetyScore = 'Safety Score must be between 0 and 100';
+      newErrors.safetyScore = "Safety Score must be between 0 and 100";
     }
 
     // Expiry date validation for new driver creation
@@ -87,7 +96,8 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (selectedDate < today) {
-        newErrors.licenseExpiryDate = 'License expiry date cannot be in the past for new driver registration';
+        newErrors.licenseExpiryDate =
+          "License expiry date cannot be in the past for new driver registration";
       }
     }
 
@@ -112,42 +122,40 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
     if (driver) {
       // Update
       const { error } = await supabase
-        .from('drivers')
+        .from("drivers")
         .update(driverData)
-        .eq('id', driver.id);
+        .eq("id", driver.id);
 
       setSaving(false);
 
       if (error) {
-        if (error.code === '23505') {
-          toast.error('License number already exists');
-          setErrors({ licenseNumber: 'License number already registered' });
+        if (error.code === "23505") {
+          toast.error("License number already exists");
+          setErrors({ licenseNumber: "License number already registered" });
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      toast.success('Driver profile updated successfully');
+      toast.success("Driver profile updated successfully");
     } else {
       // Create
-      const { error } = await supabase
-        .from('drivers')
-        .insert([driverData]);
+      const { error } = await supabase.from("drivers").insert([driverData]);
 
       setSaving(false);
 
       if (error) {
-        if (error.code === '23505') {
-          toast.error('License number already exists');
-          setErrors({ licenseNumber: 'License number already registered' });
+        if (error.code === "23505") {
+          toast.error("License number already exists");
+          setErrors({ licenseNumber: "License number already registered" });
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      toast.success('Driver registered successfully');
+      toast.success("Driver registered successfully");
     }
 
     onSuccess();
@@ -158,11 +166,13 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>{driver ? 'Edit Driver Profile' : 'Register Driver'}</DialogTitle>
+          <DialogTitle>
+            {driver ? "Edit Driver Profile" : "Register Driver"}
+          </DialogTitle>
           <DialogDescription>
             {driver
-              ? 'Update the profile information and status for this driver'
-              : 'Add a new driver profile to the transport safety and dispatch database'}
+              ? "Update the profile information and status for this driver"
+              : "Add a new driver profile to the transport safety and dispatch database"}
           </DialogDescription>
         </DialogHeader>
 
@@ -178,10 +188,12 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                errors.name ? 'border-destructive' : 'border-input'
+                errors.name ? "border-destructive" : "border-input"
               }`}
             />
-            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-xs text-destructive">{errors.name}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -196,11 +208,13 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
                 value={licenseNumber}
                 onChange={(e) => setLicenseNumber(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.licenseNumber ? 'border-destructive' : 'border-input'
+                  errors.licenseNumber ? "border-destructive" : "border-input"
                 }`}
               />
               {errors.licenseNumber && (
-                <p className="text-xs text-destructive">{errors.licenseNumber}</p>
+                <p className="text-xs text-destructive">
+                  {errors.licenseNumber}
+                </p>
               )}
             </div>
 
@@ -232,11 +246,15 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
                 value={licenseExpiryDate}
                 onChange={(e) => setLicenseExpiryDate(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.licenseExpiryDate ? 'border-destructive' : 'border-input'
+                  errors.licenseExpiryDate
+                    ? "border-destructive"
+                    : "border-input"
                 }`}
               />
               {errors.licenseExpiryDate && (
-                <p className="text-xs text-destructive">{errors.licenseExpiryDate}</p>
+                <p className="text-xs text-destructive">
+                  {errors.licenseExpiryDate}
+                </p>
               )}
             </div>
 
@@ -269,7 +287,7 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
                 value={safetyScore}
                 onChange={(e) => setSafetyScore(e.target.value)}
                 className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.safetyScore ? 'border-destructive' : 'border-input'
+                  errors.safetyScore ? "border-destructive" : "border-input"
                 }`}
               />
               {errors.safetyScore && (
@@ -307,7 +325,7 @@ export function DriverDialog({ open, onOpenChange, driver, onSuccess }: DriverDi
             {canEditDrivers && (
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {driver ? 'Save Changes' : 'Register Driver'}
+                {driver ? "Save Changes" : "Register Driver"}
               </Button>
             )}
           </DialogFooter>
