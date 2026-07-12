@@ -359,28 +359,38 @@ export default function TripsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Cargo Weight (kg) *
+                  Cargo Weight *
                 </label>
-                <input
-                  type="number"
-                  placeholder="e.g. 450"
-                  value={cargoWeight}
-                  onChange={(e) => setCargoWeight(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    placeholder="e.g. 450"
+                    value={cargoWeight}
+                    onChange={(e) => setCargoWeight(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-9 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground uppercase pointer-events-none select-none">
+                    kg
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Distance (km) *
+                  Distance *
                 </label>
-                <input
-                  type="number"
-                  placeholder="e.g. 35"
-                  value={plannedDistance}
-                  onChange={(e) => setPlannedDistance(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    placeholder="e.g. 35"
+                    value={plannedDistance}
+                    onChange={(e) => setPlannedDistance(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent pl-3 pr-9 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground uppercase pointer-events-none select-none">
+                    km
+                  </span>
+                </div>
               </div>
             </div>
 

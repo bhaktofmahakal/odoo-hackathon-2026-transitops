@@ -140,17 +140,22 @@ export function TripDialog({
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Final Odometer (km) *
+              Final Odometer *
             </label>
-            <input
-              type="number"
-              placeholder="e.g. 74500"
-              value={finalOdometer}
-              onChange={(e) => setFinalOdometer(e.target.value)}
-              className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                errors.finalOdometer ? "border-destructive" : "border-input"
-              }`}
-            />
+            <div className="relative flex items-center">
+              <input
+                type="number"
+                placeholder="e.g. 74500"
+                value={finalOdometer}
+                onChange={(e) => setFinalOdometer(e.target.value)}
+                className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-9 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                  errors.finalOdometer ? "border-destructive" : "border-input"
+                }`}
+              />
+              <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground uppercase pointer-events-none select-none">
+                km
+              </span>
+            </div>
             {errors.finalOdometer && (
               <p className="text-xs text-destructive">{errors.finalOdometer}</p>
             )}
@@ -159,18 +164,23 @@ export function TripDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Fuel Consumed (L) *
+                Fuel Consumed *
               </label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 45"
-                value={fuelConsumed}
-                onChange={(e) => setFuelConsumed(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.fuelConsumed ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 45"
+                  value={fuelConsumed}
+                  onChange={(e) => setFuelConsumed(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-9 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.fuelConsumed ? "border-destructive" : "border-input"
+                  }`}
+                />
+                <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground pointer-events-none select-none">
+                  liters
+                </span>
+              </div>
               {errors.fuelConsumed && (
                 <p className="text-xs text-destructive">
                   {errors.fuelConsumed}
@@ -180,18 +190,23 @@ export function TripDialog({
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Fuel Cost ($) *
+                Fuel Cost *
               </label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 60"
-                value={fuelCost}
-                onChange={(e) => setFuelCost(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.fuelCost ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                  $
+                </span>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 60"
+                  value={fuelCost}
+                  onChange={(e) => setFuelCost(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-6 pr-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.fuelCost ? "border-destructive" : "border-input"
+                  }`}
+                />
+              </div>
               {errors.fuelCost && (
                 <p className="text-xs text-destructive">{errors.fuelCost}</p>
               )}
@@ -200,17 +215,22 @@ export function TripDialog({
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Revenue ($) *
+              Revenue *
             </label>
-            <input
-              type="number"
-              placeholder="e.g. 500"
-              value={revenue}
-              onChange={(e) => setRevenue(e.target.value)}
-              className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                errors.revenue ? "border-destructive" : "border-input"
-              }`}
-            />
+            <div className="relative flex items-center">
+              <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                $
+              </span>
+              <input
+                type="number"
+                placeholder="e.g. 500"
+                value={revenue}
+                onChange={(e) => setRevenue(e.target.value)}
+                className={`flex h-9 w-full rounded-md border bg-transparent pl-6 pr-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                  errors.revenue ? "border-destructive" : "border-input"
+                }`}
+              />
+            </div>
             {errors.revenue && (
               <p className="text-xs text-destructive">{errors.revenue}</p>
             )}
