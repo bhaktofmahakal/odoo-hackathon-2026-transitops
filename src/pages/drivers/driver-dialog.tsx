@@ -4,7 +4,7 @@ import type { Driver, DriverStatus } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { canWrite } from "@/lib/permissions";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -240,17 +240,20 @@ export function DriverDialog({
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 License Expiry *
               </label>
-              <input
-                type="date"
-                disabled={!canEditDrivers}
-                value={licenseExpiryDate}
-                onChange={(e) => setLicenseExpiryDate(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.licenseExpiryDate
-                    ? "border-destructive"
-                    : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center date-input-premium">
+                <input
+                  type="date"
+                  disabled={!canEditDrivers}
+                  value={licenseExpiryDate}
+                  onChange={(e) => setLicenseExpiryDate(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-9 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.licenseExpiryDate
+                      ? "border-destructive"
+                      : "border-input"
+                  }`}
+                />
+                <Calendar className="absolute right-3 top-2.5 size-4 text-muted-foreground pointer-events-none select-none" />
+              </div>
               {errors.licenseExpiryDate && (
                 <p className="text-xs text-destructive">
                   {errors.licenseExpiryDate}
@@ -278,18 +281,23 @@ export function DriverDialog({
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Safety Score *
               </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                placeholder="100"
-                disabled={!canEditDrivers}
-                value={safetyScore}
-                onChange={(e) => setSafetyScore(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.safetyScore ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="100"
+                  disabled={!canEditDrivers}
+                  value={safetyScore}
+                  onChange={(e) => setSafetyScore(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-12 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.safetyScore ? "border-destructive" : "border-input"
+                  }`}
+                />
+                <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground uppercase pointer-events-none select-none">
+                  / 100
+                </span>
+              </div>
               {errors.safetyScore && (
                 <p className="text-xs text-destructive">{errors.safetyScore}</p>
               )}
