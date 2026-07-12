@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Vehicle, Trip } from "@/lib/types";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -194,16 +194,21 @@ export function FuelDialog({ open, onOpenChange, onSuccess }: FuelDialogProps) {
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Liters *
               </label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 50"
-                value={liters}
-                onChange={(e) => setLiters(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.liters ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 50"
+                  value={liters}
+                  onChange={(e) => setLiters(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-12 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.liters ? "border-destructive" : "border-input"
+                  }`}
+                />
+                <span className="absolute right-2.5 text-[10px] font-bold text-muted-foreground pointer-events-none select-none">
+                  liters
+                </span>
+              </div>
               {errors.liters && (
                 <p className="text-xs text-destructive">{errors.liters}</p>
               )}
@@ -211,18 +216,23 @@ export function FuelDialog({ open, onOpenChange, onSuccess }: FuelDialogProps) {
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Cost ($) *
+                Cost *
               </label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 75"
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
-                className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                  errors.cost ? "border-destructive" : "border-input"
-                }`}
-              />
+              <div className="relative flex items-center">
+                <span className="absolute left-2.5 text-xs text-muted-foreground pointer-events-none select-none">
+                  $
+                </span>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 75"
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  className={`flex h-9 w-full rounded-md border bg-transparent pl-6 pr-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    errors.cost ? "border-destructive" : "border-input"
+                  }`}
+                />
+              </div>
               {errors.cost && (
                 <p className="text-xs text-destructive">{errors.cost}</p>
               )}
@@ -233,14 +243,17 @@ export function FuelDialog({ open, onOpenChange, onSuccess }: FuelDialogProps) {
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Purchase Date *
             </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={`flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                errors.date ? "border-destructive" : "border-input"
-              }`}
-            />
+            <div className="relative flex items-center date-input-premium">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className={`flex h-9 w-full rounded-md border bg-transparent pl-3 pr-9 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                  errors.date ? "border-destructive" : "border-input"
+                }`}
+              />
+              <Calendar className="absolute right-3 top-2.5 size-4 text-muted-foreground pointer-events-none select-none" />
+            </div>
             {errors.date && (
               <p className="text-xs text-destructive">{errors.date}</p>
             )}
